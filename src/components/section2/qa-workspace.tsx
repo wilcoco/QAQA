@@ -499,70 +499,54 @@ export function Section2Workspace({
             if (res.ok) onQASetUpdated(await res.json());
           }}
           onAskFollowUp={(question) => {
-            setInput(question);
+            sendMessage(question, qaSet);
           }}
         />
       )}
 
-      {/* Input area — always visible, with inline action buttons */}
-      <div className="border-t p-4">
-        {/* Human answer mode banner */}
-        {humanAnswerMode && messages.length <= 1 && (
-          <div className="max-w-3xl mx-auto mb-3 p-3 rounded-lg bg-gradient-to-r from-emerald-50 to-teal-50 dark:from-emerald-950/30 dark:to-teal-950/30 border border-emerald-200 dark:border-emerald-800">
-            <p className="text-sm font-medium text-emerald-800 dark:text-emerald-300">✍️ 내 경험과 지식으로 직접 답변해주세요</p>
-            <p className="text-xs text-emerald-600 dark:text-emerald-400 mt-0.5">답변 후 Q&A를 공유하면 다른 사람이 투자할 수 있고, 보상이 돌아옵니다.</p>
-          </div>
-        )}
-        <div className="max-w-3xl mx-auto flex gap-2">
-          <Textarea
-            placeholder={
-              humanAnswerMode && messages.length <= 1
-                ? "이 주제에 대한 내 답변을 작성하세요..."
-                : isSharedNotOwner
-                  ? "질문을 입력하면 내 확장 대화가 생성됩니다..."
-                  : "추가 질문을 입력하세요..."
-            }
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter" && !e.shiftKey) {
-                e.preventDefault();
-                if (humanAnswerMode && messages.length <= 1) {
-                  handleSubmitHumanAnswer();
-                } else {
-                  handleSendMessage();
-                }
-              }
-            }}
-            className={`resize-none ${humanAnswerMode && messages.length <= 1 ? "min-h-[120px]" : "min-h-[44px] max-h-32"}`}
-            rows={humanAnswerMode && messages.length <= 1 ? 4 : 1}
-            disabled={isStreaming}
-          />
-          <Button
-            onClick={humanAnswerMode && messages.length <= 1 ? handleSubmitHumanAnswer : handleSendMessage}
-            disabled={!input.trim() || isStreaming}
-            size="sm"
-            className="self-end"
-          >
-            {humanAnswerMode && messages.length <= 1
-              ? "답변 등록"
-              : isSharedNotOwner && messages.length > 0 && !qaSet.parentQASetId
-                ? "확장 시작"
-                : "전송"}
-          </Button>
-          {/* Share button for unshared owner Q&A (when ReviewGuide not showing) */}
-          {isOwner && !qaSet.isShared && hasMessages && (
-            <Button
-              variant="outline"
-              size="sm"
-              className="self-end text-xs shrink-0"
-              onClick={() => setShowShareDialog(true)}
-            >
-              공유
-            </Button>
+      {/* Input area — 대화 진행용 (humanAnswer 모드 또는 본인 QA 추가질문) */}
+      {(isOwner || humanAnswerMode) && (
+        <div className="border-t p-4">
+          {humanAnswerMode && messages.length <= 1 && (
+            <div className="max-w-3xl mx-auto mb-3 p-3 rounded-lg bg-gradient-to-r from-emerald-50 to-teal-50 dark:from-emerald-950/30 dark:to-teal-950/30 border border-emerald-200 dark:border-emerald-800">
+              <p className="text-sm font-medium text-emerald-800 dark:text-emerald-300">✍️ 내 경험과 지식으로 직접 답변해주세요</p>
+              <p className="text-xs text-emerald-600 dark:text-emerald-400 mt-0.5">답변 후 Q&A를 공유하면 다른 사람이 투자할 수 있고, 보상이 돌아옵니다.</p>
+            </div>
           )}
+          <div className="max-w-3xl mx-auto flex gap-2">
+            <Textarea
+              placeholder={
+                humanAnswerMode && messages.length <= 1
+                  ? "이 주제에 대한 내 답변을 작성하세요..."
+                  : "추가 질문을 입력하세요..."
+              }
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && !e.shiftKey) {
+                  e.preventDefault();
+                  if (humanAnswerMode && messages.length <= 1) {
+                    handleSubmitHumanAnswer();
+                  } else {
+                    handleSendMessage();
+                  }
+                }
+              }}
+              className={`resize-none ${humanAnswerMode && messages.length <= 1 ? "min-h-[120px]" : "min-h-[44px] max-h-32"}`}
+              rows={humanAnswerMode && messages.length <= 1 ? 4 : 1}
+              disabled={isStreaming}
+            />
+            <Button
+              onClick={humanAnswerMode && messages.length <= 1 ? handleSubmitHumanAnswer : handleSendMessage}
+              disabled={!input.trim() || isStreaming}
+              size="sm"
+              className="self-end"
+            >
+              {humanAnswerMode && messages.length <= 1 ? "답변 등록" : "전송"}
+            </Button>
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Panels & Dialogs */}
       {qaSet.parentQASetId && (

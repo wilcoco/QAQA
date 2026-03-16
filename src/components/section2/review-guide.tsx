@@ -79,108 +79,140 @@ export function ReviewGuide({
     setFollowUpText("");
   };
 
-  return (
-    <div className="border-t">
-      <div className="max-w-3xl mx-auto px-4 py-3 space-y-2">
-
-        {/* ── 행동 카드 한 줄 ── */}
-        <div className="flex items-center gap-2 flex-wrap">
-
-          {/* 타인 QA: 투자 / 반대 투자 */}
-          {!isOwner && qaSet.isShared && (
-            <>
-              <Button size="sm" variant="outline" className="gap-1.5 h-8 text-xs" onClick={onInvest}>
-                💰 투자
-                {investorCount > 0 && (
-                  <span className="text-[10px] text-muted-foreground ml-0.5">{totalInvested}P · {investorCount}명</span>
-                )}
-              </Button>
-              <Button size="sm" variant="outline" className="gap-1.5 h-8 text-xs text-red-600 border-red-200 hover:bg-red-50" onClick={onCounterInvest}>
-                📉 반대 투자
-                {negativeCount > 0 && (
-                  <span className="text-[10px] text-muted-foreground ml-0.5">{negativeCount}명</span>
-                )}
-              </Button>
-            </>
-          )}
-
-          {/* 본인 미공유 QA: 공유 */}
-          {isOwner && !qaSet.isShared && (
-            <Button size="sm" className="gap-1.5 h-8 text-xs" onClick={onShareQA}>
+  // ━━━ 시나리오 A: 본인 QA, 미공유 ━━━
+  if (isOwner && !qaSet.isShared) {
+    return (
+      <div className="border-t bg-muted/10">
+        <div className="max-w-3xl mx-auto px-4 py-4 space-y-3">
+          <div className="rounded-xl border-2 border-dashed border-primary/30 bg-primary/5 p-4 space-y-2">
+            <p className="text-sm font-medium">이 Q&A가 도움이 됐다면 공유해보세요</p>
+            <p className="text-xs text-muted-foreground leading-relaxed">
+              공유하면 다른 사람이 이 답변을 참고할 수 있고,
+              투자를 받으면 포인트 수익이 돌아옵니다.
+            </p>
+            <Button size="sm" onClick={onShareQA} className="gap-1.5">
               공유하기
-              <span className="text-[10px] opacity-70 ml-0.5">투자 받기</span>
             </Button>
-          )}
-
-          {/* 구분선 */}
-          <div className="h-5 w-px bg-border mx-1 hidden sm:block" />
-
-          {/* 의견 추가 라벨 */}
-          <span className="text-xs text-muted-foreground">또는</span>
+          </div>
         </div>
+      </div>
+    );
+  }
 
-        {/* ── 의견 입력 ── */}
-        <div className="flex gap-2 items-start">
-          <div className="flex flex-wrap gap-1 shrink-0 pt-1.5">
+  // ━━━ 시나리오 B: 타인 공유 QA (또는 본인 공유 후) ━━━
+  return (
+    <div className="border-t bg-muted/10">
+      <div className="max-w-3xl mx-auto px-4 py-4 space-y-4">
+
+        {/* ── 1. 투자 / 반대 투자 ── */}
+        {!isOwner && (
+          <div className="grid grid-cols-2 gap-3">
+            <div className="rounded-xl border p-3.5 space-y-2 hover:border-green-300 transition-colors">
+              <p className="text-sm font-medium">이 답변이 정확하고 유용하다면</p>
+              <p className="text-xs text-muted-foreground">
+                일찍 투자할수록 후속 투자자 보상의 더 많은 몫을 받습니다
+                {investorCount > 0 && (
+                  <span className="ml-1">· 현재 {investorCount}명 {totalInvested}P</span>
+                )}
+              </p>
+              <Button size="sm" className="w-full gap-1.5" onClick={onInvest}>
+                💰 투자하기
+              </Button>
+            </div>
+
+            <div className="rounded-xl border p-3.5 space-y-2 hover:border-red-300 transition-colors">
+              <p className="text-sm font-medium">틀리거나 오래된 정보가 있다면</p>
+              <p className="text-xs text-muted-foreground">
+                근거와 함께 반대 투자하면 동의자가 늘 때 보상을 받습니다
+                {negativeCount > 0 && (
+                  <span className="ml-1">· 현재 {negativeCount}명</span>
+                )}
+              </p>
+              <Button size="sm" variant="outline" className="w-full gap-1.5 text-red-600 border-red-200 hover:bg-red-50" onClick={onCounterInvest}>
+                📉 반대 투자
+              </Button>
+            </div>
+          </div>
+        )}
+
+        {/* ── 2. 의견 추가 ── */}
+        <div className="rounded-xl border p-3.5 space-y-2.5">
+          <div className="flex items-center gap-2">
+            <p className="text-sm font-medium">보충할 경험이나 다른 관점이 있다면</p>
+            {opinionDone && (
+              <Badge variant="outline" className="text-[10px] border-green-300 text-green-600">등록됨 ✓</Badge>
+            )}
+          </div>
+          <p className="text-xs text-muted-foreground">
+            의견은 지식 지도에 별도 노드로 이 Q&A와 연결됩니다
+          </p>
+
+          {/* 관계 유형 */}
+          <div className="flex gap-1.5">
             {OPINION_RELATIONS.map((rel) => (
               <button
                 key={rel.value}
                 onClick={() => setOpinionRelation(rel.value)}
-                className={`text-[10px] px-1.5 py-0.5 rounded border transition-colors ${
+                className={`text-xs px-2 py-1 rounded-md border transition-colors ${
                   opinionRelation === rel.value
-                    ? "border-primary bg-primary/10 text-primary"
-                    : "border-transparent text-muted-foreground hover:border-border"
+                    ? "border-primary bg-primary/10 text-primary font-medium"
+                    : "border-border text-muted-foreground hover:border-primary/40"
                 }`}
-                title={rel.label}
               >
-                {rel.icon}
+                {rel.icon} {rel.label}
               </button>
             ))}
           </div>
-          <Textarea
-            placeholder="이 답변에 보충할 의견이 있다면 여기에..."
-            value={opinionText}
-            onChange={(e) => setOpinionText(e.target.value.slice(0, 1000))}
-            className="min-h-[40px] text-sm resize-none flex-1"
-            rows={1}
-          />
-          <Button
-            size="sm"
-            variant="secondary"
-            disabled={!opinionText.trim() || submittingOpinion}
-            onClick={handleSubmitOpinion}
-            className="shrink-0 self-start mt-0.5 h-8 text-xs"
-          >
-            {submittingOpinion ? <Loader2 className="h-3 w-3 animate-spin" /> : "✍️ 의견"}
-          </Button>
-          {opinionDone && (
-            <Badge variant="outline" className="text-[10px] border-green-300 text-green-600 self-center shrink-0">✓</Badge>
-          )}
+
+          {/* 입력 + 등록 */}
+          <div className="flex gap-2">
+            <Textarea
+              placeholder="의견을 작성하세요..."
+              value={opinionText}
+              onChange={(e) => setOpinionText(e.target.value.slice(0, 1000))}
+              className="min-h-[48px] text-sm resize-none flex-1"
+              rows={2}
+            />
+            <Button
+              size="sm"
+              disabled={!opinionText.trim() || submittingOpinion}
+              onClick={handleSubmitOpinion}
+              className="self-end shrink-0 gap-1"
+            >
+              {submittingOpinion ? <Loader2 className="h-3 w-3 animate-spin" /> : "✍️"} 의견 등록
+            </Button>
+          </div>
         </div>
 
-        {/* ── 추가 질문 입력 ── */}
-        <div className="flex gap-2">
-          <input
-            type="text"
-            placeholder="추가 질문이 있다면 여기에..."
-            value={followUpText}
-            onChange={(e) => setFollowUpText(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter" && !e.shiftKey) {
-                e.preventDefault();
-                handleSendFollowUp();
-              }
-            }}
-            className="flex-1 h-8 px-3 text-sm rounded-md border bg-background focus:outline-none focus:ring-1 focus:ring-ring"
-          />
-          <Button
-            size="sm"
-            disabled={!followUpText.trim()}
-            onClick={handleSendFollowUp}
-            className="shrink-0 h-8 text-xs gap-1"
-          >
-            <Send className="h-3 w-3" /> 질문
-          </Button>
+        {/* ── 3. 추가 질문 ── */}
+        <div className="rounded-xl border p-3.5 space-y-2">
+          <p className="text-sm font-medium">이 주제에서 더 알고 싶다면</p>
+          <p className="text-xs text-muted-foreground">
+            이 Q&A를 기반으로 AI에게 연쇄 질문합니다. 내 대화로 자동 생성됩니다.
+          </p>
+          <div className="flex gap-2">
+            <input
+              type="text"
+              placeholder="추가 질문을 입력하세요..."
+              value={followUpText}
+              onChange={(e) => setFollowUpText(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && !e.shiftKey) {
+                  e.preventDefault();
+                  handleSendFollowUp();
+                }
+              }}
+              className="flex-1 h-9 px-3 text-sm rounded-md border bg-background focus:outline-none focus:ring-1 focus:ring-ring"
+            />
+            <Button
+              size="sm"
+              disabled={!followUpText.trim()}
+              onClick={handleSendFollowUp}
+              className="shrink-0 gap-1"
+            >
+              <Send className="h-3.5 w-3.5" /> 질문하기
+            </Button>
+          </div>
         </div>
 
       </div>
