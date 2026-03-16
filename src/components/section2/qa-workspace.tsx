@@ -366,12 +366,7 @@ export function Section2Workspace({
         </div>
       )}
 
-      {/* Auto-extend notice */}
-      {isSharedNotOwner && (
-        <div className="px-4 py-2 bg-teal-50 dark:bg-teal-950/30 border-b text-xs text-teal-700 dark:text-teal-400">
-          추가 질문을 입력하면 이 Q&A를 기반으로 내 대화가 자동으로 시작됩니다.
-        </div>
-      )}
+      {/* Auto-extend notice removed — ReviewGuide handles this */}
 
       {/* Messages */}
       <div ref={scrollRef} className="flex-1 overflow-y-auto min-h-0">
@@ -446,63 +441,25 @@ export function Section2Workspace({
             </Card>
           )}
 
-          {/* ═══ Inline CTAs — contextual, within the conversation flow ═══ */}
-
-          {/* Share hint — after first AI response, for owner, not yet shared */}
-          {shouldShowShareHint && (
-            <div className="flex items-center gap-3 p-4 rounded-xl bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-950/30 dark:to-indigo-950/30 border border-blue-200 dark:border-blue-800">
-              <div className="flex-1">
-                <p className="text-sm font-medium text-foreground">이 대화가 도움이 되었나요?</p>
-                <p className="text-xs text-muted-foreground mt-0.5">Q&A를 공유하면 다른 사람도 참고하고, 투자를 받으면 보상이 돌아옵니다.</p>
-              </div>
-              <div className="flex gap-2 shrink-0">
-                <Button size="sm" onClick={() => setShowShareDialog(true)}>
-                  공유하기
-                </Button>
-                <Button variant="ghost" size="sm" className="text-xs text-muted-foreground" onClick={() => setDismissedShareHint(true)}>
-                  나중에
-                </Button>
-              </div>
-            </div>
-          )}
-
-          {/* Recommend hint — for shared Q&A you don't own */}
-          {shouldShowRecommendHint && (
-            <div className="flex items-center gap-3 p-4 rounded-xl bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-950/30 dark:to-orange-950/30 border border-amber-200 dark:border-amber-800">
-              <div className="flex-1">
-                <p className="text-sm font-medium text-foreground">이 Q&A가 도움이 되었나요?</p>
-                <p className="text-xs text-muted-foreground mt-0.5">투자하면 좋은 지식을 먼저 발견한 수익을 받을 수 있어요.</p>
-              </div>
-              <div className="flex gap-2 shrink-0">
-                <Button size="sm" onClick={() => setShowInvestDialog(true)}>
-                  💰 투자하기
-                </Button>
-                <Button variant="ghost" size="sm" className="text-xs text-muted-foreground" onClick={() => setDismissedRecommendHint(true)}>
-                  나중에
-                </Button>
-              </div>
-            </div>
+          {/* ═══ 행동 가이드 — 메시지 스크롤 안에서 자연스럽게 ═══ */}
+          {hasMessages && !isStreaming && (
+            <ReviewGuide
+              qaSet={qaSet}
+              isOwner={isOwner}
+              onInvest={() => setShowInvestDialog(true)}
+              onCounterInvest={() => setShowHuntDialog(true)}
+              onShareQA={() => setShowShareDialog(true)}
+              onOpinionSubmitted={async () => {
+                const res = await fetch(`/api/qa-sets/${qaSet.id}`);
+                if (res.ok) onQASetUpdated(await res.json());
+              }}
+              onAskFollowUp={(question) => {
+                sendMessage(question, qaSet);
+              }}
+            />
           )}
         </div>
       </div>
-
-      {/* ── AI Review Guide — 메시지 아래, 입력 위 ── */}
-      {hasMessages && !isStreaming && (
-        <ReviewGuide
-          qaSet={qaSet}
-          isOwner={isOwner}
-          onInvest={() => setShowInvestDialog(true)}
-          onCounterInvest={() => setShowHuntDialog(true)}
-          onShareQA={() => setShowShareDialog(true)}
-          onOpinionSubmitted={async () => {
-            const res = await fetch(`/api/qa-sets/${qaSet.id}`);
-            if (res.ok) onQASetUpdated(await res.json());
-          }}
-          onAskFollowUp={(question) => {
-            sendMessage(question, qaSet);
-          }}
-        />
-      )}
 
       {/* Input area — 대화 진행용 (humanAnswer 모드 또는 본인 QA 추가질문) */}
       {(isOwner || humanAnswerMode) && (
