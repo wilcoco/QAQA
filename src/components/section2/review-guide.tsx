@@ -10,6 +10,7 @@ import type { QASetWithMessages } from "@/types/qa-set";
 interface ReviewGuideProps {
   qaSet: QASetWithMessages;
   isOwner: boolean;
+  userId?: string;
   onInvest: () => void;
   onCounterInvest: () => void;
   onShareQA: () => void;
@@ -27,6 +28,7 @@ const OPINION_RELATIONS = [
 export function ReviewGuide({
   qaSet,
   isOwner,
+  userId,
   onInvest,
   onCounterInvest,
   onShareQA,
@@ -42,6 +44,9 @@ export function ReviewGuide({
   const investorCount = qaSet.investorCount ?? 0;
   const totalInvested = qaSet.totalInvested ?? 0;
   const negativeCount = qaSet.negativeCount ?? 0;
+  const myInvestment = (qaSet.investments ?? []).find(
+    (inv) => inv.userId === userId && !inv.isNegative
+  );
 
   const handleSubmitOpinion = useCallback(async () => {
     if (!opinionText.trim() || submittingOpinion) return;
@@ -104,8 +109,44 @@ export function ReviewGuide({
     <div className="border-t bg-muted/10">
       <div className="max-w-3xl mx-auto px-4 py-4 space-y-4">
 
-        {/* ── 1. 투자 / 반대 투자 ── */}
-        {!isOwner && (
+        {/* ── 1. 투자 영역 ── */}
+        {isOwner ? (
+          /* 본인 QA: 자기 투자(1회) + 현황 */
+          <div className="rounded-xl border p-3.5 space-y-2">
+            {!myInvestment ? (
+              <>
+                <p className="text-sm font-medium">내 Q&A에 먼저 투자하세요</p>
+                <p className="text-xs text-muted-foreground">
+                  작성자가 먼저 투자하면 신뢰도가 올라가고, 다른 투자자의 참여를 유도합니다.
+                  어서리티 점수 한도 내에서 1회 투자할 수 있습니다.
+                </p>
+                <Button size="sm" className="gap-1.5" onClick={onInvest}>
+                  💰 내 Q&A에 투자하기
+                </Button>
+              </>
+            ) : (
+              <>
+                <p className="text-sm font-medium">내 Q&A 투자 현황</p>
+                <div className="flex items-center gap-4 text-xs">
+                  <span className="text-green-700 dark:text-green-400 font-medium">
+                    ✅ 내 투자: {myInvestment.amount}P
+                  </span>
+                  {investorCount > 1 && (
+                    <span className="text-muted-foreground">
+                      + 다른 {investorCount - 1}명이 {totalInvested - myInvestment.amount}P 투자
+                    </span>
+                  )}
+                  {negativeCount > 0 && (
+                    <span className="text-red-600 dark:text-red-400 font-medium">
+                      📉 {negativeCount}명 반대 투자
+                    </span>
+                  )}
+                </div>
+              </>
+            )}
+          </div>
+        ) : (
+          /* 타인 QA: 투자 / 반대 투자 */
           <div className="grid grid-cols-2 gap-3">
             <div className="rounded-xl border p-3.5 space-y-2 hover:border-green-300 transition-colors">
               <p className="text-sm font-medium">이 답변이 정확하고 유용하다면</p>

@@ -446,6 +446,7 @@ export function Section2Workspace({
             <ReviewGuide
               qaSet={qaSet}
               isOwner={isOwner}
+              userId={session?.user?.id}
               onInvest={() => setShowInvestDialog(true)}
               onCounterInvest={() => setShowHuntDialog(true)}
               onShareQA={() => setShowShareDialog(true)}
