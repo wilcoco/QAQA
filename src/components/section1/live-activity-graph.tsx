@@ -217,7 +217,7 @@ export function LiveActivityGraph({ onSelectQASet, onNavigateToMap }: LiveActivi
               className="fill-muted-foreground"
               style={{ fontSize: "11px" }}
             >
-              첫 Q&A를 공유하면 여기에 나타납니다
+              공유된 Q&A가 생기면 지식 네트워크가 시작됩니다
             </text>
           </svg>
         </div>
