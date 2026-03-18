@@ -503,16 +503,8 @@ export function LiveActivityGraph({ onSelectQASet, onNavigateToMap, onNavigateTo
   const svgRef = useRef<SVGSVGElement>(null);
   const abortRef = useRef<AbortController | null>(null);
 
-  // Drag state
+  // Drag state (node-level)
   const [dragOffsets, setDragOffsets] = useState<Map<string, { dx: number; dy: number }>>(new Map());
-  const dragRef = useRef<{
-    nodeId: string;
-    startSvgX: number;
-    startSvgY: number;
-    origDx: number;
-    origDy: number;
-    moved: boolean;
-  } | null>(null);
 
   const isMobile = typeof window !== "undefined" && window.innerWidth < 768;
   const vw = isMobile ? 440 : 900;
@@ -559,59 +551,73 @@ export function LiveActivityGraph({ onSelectQASet, onNavigateToMap, onNavigateTo
   const forceRef = useRef<Map<string, { dx: number; dy: number }>>(new Map());
   const rafRef = useRef<number>(0);
 
+  // Cluster drag offsets (clusterId → {dx, dy})
+  const [clusterDragOffsets, setClusterDragOffsets] = useState<Map<string, { dx: number; dy: number }>>(new Map());
+
+  // Map nodeId → clusterId for cluster drag
+  const nodeClusterMap = useMemo(() => {
+    const m = new Map<string, string>();
+    for (const n of baseLayoutNodes) {
+      if (n.clusterId) m.set(n.id, n.clusterId);
+    }
+    return m;
+  }, [baseLayoutNodes]);
+
   useEffect(() => {
     if (baseLayoutNodes.length === 0) return;
 
-    const PAD = 16;
+    const PAD = 20;
     let frame = 0;
-    const maxFrames = 120; // ~2 seconds at 60fps
+    const maxFrames = 200;
     forceRef.current = new Map();
 
     const step = () => {
       const offsets = forceRef.current;
       let anyPush = false;
 
-      for (let a = 0; a < baseLayoutNodes.length; a++) {
-        for (let b = a + 1; b < baseLayoutNodes.length; b++) {
-          const na = baseLayoutNodes[a];
-          const nb = baseLayoutNodes[b];
-          const oa = offsets.get(na.id) ?? { dx: 0, dy: 0 };
-          const ob = offsets.get(nb.id) ?? { dx: 0, dy: 0 };
+      // Multiple sub-steps per frame for faster convergence
+      for (let sub = 0; sub < 3; sub++) {
+        for (let a = 0; a < baseLayoutNodes.length; a++) {
+          for (let b = a + 1; b < baseLayoutNodes.length; b++) {
+            const na = baseLayoutNodes[a];
+            const nb = baseLayoutNodes[b];
+            const oa = offsets.get(na.id) ?? { dx: 0, dy: 0 };
+            const ob = offsets.get(nb.id) ?? { dx: 0, dy: 0 };
 
-          const ax = na.x + oa.dx, ay = na.y + oa.dy;
-          const bx = nb.x + ob.dx, by = nb.y + ob.dy;
-          const dx = bx - ax, dy = by - ay;
+            const ax = na.x + oa.dx, ay = na.y + oa.dy;
+            const bx = nb.x + ob.dx, by = nb.y + ob.dy;
+            const ddx = bx - ax, ddy = by - ay;
 
-          const overlapX = (na.w + nb.w) / 2 + PAD - Math.abs(dx);
-          const overlapY = (na.h + nb.h) / 2 + PAD - Math.abs(dy);
+            const overlapX = (na.w + nb.w) / 2 + PAD - Math.abs(ddx);
+            const overlapY = (na.h + nb.h) / 2 + PAD - Math.abs(ddy);
 
-          if (overlapX > 0 && overlapY > 0) {
-            anyPush = true;
-            const force = 0.3; // soft push per frame
-            if (overlapX < overlapY) {
-              const push = overlapX * force;
-              const sx = dx >= 0 ? 1 : -1;
-              offsets.set(na.id, { dx: oa.dx - sx * push, dy: oa.dy });
-              offsets.set(nb.id, { dx: ob.dx + sx * push, dy: ob.dy });
-            } else {
-              const push = overlapY * force;
-              const sy = dy >= 0 ? 1 : -1;
-              offsets.set(na.id, { dx: oa.dx, dy: oa.dy - sy * push });
-              offsets.set(nb.id, { dx: ob.dx, dy: ob.dy + sy * push });
-            }
+            if (overlapX > 0 && overlapY > 0) {
+              anyPush = true;
+              const force = 0.45;
+              if (overlapX < overlapY) {
+                const push = overlapX * force;
+                const sx = ddx >= 0 ? 1 : -1;
+                offsets.set(na.id, { dx: oa.dx - sx * push, dy: oa.dy });
+                offsets.set(nb.id, { dx: ob.dx + sx * push, dy: ob.dy });
+              } else {
+                const push = overlapY * force;
+                const sy = ddy >= 0 ? 1 : -1;
+                offsets.set(na.id, { dx: oa.dx, dy: oa.dy - sy * push });
+                offsets.set(nb.id, { dx: ob.dx, dy: ob.dy + sy * push });
+              }
 
-            // Clamp
-            for (const n of [na, nb]) {
-              const o = offsets.get(n.id)!;
-              o.dx = clamp(n.x + o.dx, n.w / 2 + 2, vw - n.w / 2 - 2) - n.x;
-              o.dy = clamp(n.y + o.dy, n.h / 2 + 2, vh - n.h / 2 - 2) - n.y;
+              for (const n of [na, nb]) {
+                const o = offsets.get(n.id)!;
+                o.dx = clamp(n.x + o.dx, n.w / 2 + 4, vw - n.w / 2 - 4) - n.x;
+                o.dy = clamp(n.y + o.dy, n.h / 2 + 4, vh - n.h / 2 - 4) - n.y;
+              }
             }
           }
         }
       }
 
       frame++;
-      if (anyPush || frame < 10) {
+      if (anyPush || frame < 15) {
         setForceOffsets(new Map(offsets));
       }
       if (anyPush && frame < maxFrames) {
@@ -619,10 +625,9 @@ export function LiveActivityGraph({ onSelectQASet, onNavigateToMap, onNavigateTo
       }
     };
 
-    // Start after nodes have appeared (~1s delay)
     const timer = setTimeout(() => {
       rafRef.current = requestAnimationFrame(step);
-    }, 800);
+    }, 600);
 
     return () => {
       clearTimeout(timer);
@@ -630,17 +635,37 @@ export function LiveActivityGraph({ onSelectQASet, onNavigateToMap, onNavigateTo
     };
   }, [baseLayoutNodes, vw, vh]);
 
-  // Apply drag + force offsets to get final positions
+  // Apply force + drag + clusterDrag offsets
   const layoutNodes = useMemo(() => {
     return baseLayoutNodes.map((n) => {
       const fo = forceOffsets.get(n.id);
       const dr = dragOffsets.get(n.id);
-      const dx = (fo?.dx ?? 0) + (dr?.dx ?? 0);
-      const dy = (fo?.dy ?? 0) + (dr?.dy ?? 0);
+      const cid = nodeClusterMap.get(n.id);
+      const cd = cid ? clusterDragOffsets.get(cid) : undefined;
+      const dx = (fo?.dx ?? 0) + (dr?.dx ?? 0) + (cd?.dx ?? 0);
+      const dy = (fo?.dy ?? 0) + (dr?.dy ?? 0) + (cd?.dy ?? 0);
       if (dx === 0 && dy === 0) return n;
       return { ...n, x: n.x + dx, y: n.y + dy };
     });
-  }, [baseLayoutNodes, forceOffsets, dragOffsets]);
+  }, [baseLayoutNodes, forceOffsets, dragOffsets, clusterDragOffsets, nodeClusterMap]);
+
+  // Recompute halos dynamically from current node positions
+  const dynamicHalos = useMemo(() => {
+    if (halos.length === 0) return halos;
+    const clusterPositions = new Map<string, { x: number; y: number }[]>();
+    for (const n of layoutNodes) {
+      if (n.clusterId) {
+        const arr = clusterPositions.get(n.clusterId) ?? [];
+        arr.push({ x: n.x, y: n.y });
+        clusterPositions.set(n.clusterId, arr);
+      }
+    }
+    return halos.map((h) => {
+      const positions = clusterPositions.get(h.id);
+      if (!positions || positions.length === 0) return h;
+      return computeHalo(positions, h.id, h.name, h.color);
+    });
+  }, [halos, layoutNodes]);
 
   const nodeMap = useMemo(() => {
     const m = new Map<string, LayoutNode>();
@@ -690,15 +715,28 @@ export function LiveActivityGraph({ onSelectQASet, onNavigateToMap, onNavigateTo
     return { x: svgPt.x, y: svgPt.y };
   }, []);
 
-  // ─── Drag handlers ───
-  const handlePointerDown = useCallback((nodeId: string, e: React.PointerEvent) => {
+  // ─── Drag handlers (nodes + clusters) ───
+  const dragRef = useRef<{
+    nodeId: string;
+    isCluster: boolean;
+    startSvgX: number;
+    startSvgY: number;
+    origDx: number;
+    origDy: number;
+    moved: boolean;
+  } | null>(null);
+
+  const handlePointerDown = useCallback((nodeId: string, e: React.PointerEvent, isCluster = false) => {
     e.preventDefault();
     e.stopPropagation();
     (e.target as Element).setPointerCapture?.(e.pointerId);
     const svgPt = clientToSvg(e.clientX, e.clientY);
-    const existing = dragOffsets.get(nodeId);
+    const existing = isCluster
+      ? clusterDragOffsets.get(nodeId)
+      : dragOffsets.get(nodeId);
     dragRef.current = {
       nodeId,
+      isCluster,
       startSvgX: svgPt.x,
       startSvgY: svgPt.y,
       origDx: existing?.dx ?? 0,
@@ -706,7 +744,7 @@ export function LiveActivityGraph({ onSelectQASet, onNavigateToMap, onNavigateTo
       moved: false,
     };
     setTooltip(null);
-  }, [clientToSvg, dragOffsets]);
+  }, [clientToSvg, dragOffsets, clusterDragOffsets]);
 
   const handlePointerMove = useCallback((e: React.PointerEvent) => {
     const drag = dragRef.current;
@@ -718,11 +756,19 @@ export function LiveActivityGraph({ onSelectQASet, onNavigateToMap, onNavigateTo
       drag.moved = true;
     }
     if (drag.moved) {
-      setDragOffsets((prev) => {
-        const next = new Map(prev);
-        next.set(drag.nodeId, { dx: drag.origDx + dx, dy: drag.origDy + dy });
-        return next;
-      });
+      if (drag.isCluster) {
+        setClusterDragOffsets((prev) => {
+          const next = new Map(prev);
+          next.set(drag.nodeId, { dx: drag.origDx + dx, dy: drag.origDy + dy });
+          return next;
+        });
+      } else {
+        setDragOffsets((prev) => {
+          const next = new Map(prev);
+          next.set(drag.nodeId, { dx: drag.origDx + dx, dy: drag.origDy + dy });
+          return next;
+        });
+      }
     }
   }, [clientToSvg]);
 
@@ -730,12 +776,16 @@ export function LiveActivityGraph({ onSelectQASet, onNavigateToMap, onNavigateTo
     const drag = dragRef.current;
     dragRef.current = null;
     if (!drag) return;
-    // If didn't move, treat as click
-    if (!drag.moved) {
+    if (!drag.moved && !drag.isCluster) {
       const node = nodeMap.get(drag.nodeId);
       if (node) onSelectQASet(node.qaSetId);
     }
-  }, [nodeMap, onSelectQASet]);
+    if (!drag.moved && drag.isCluster && onNavigateToCluster) {
+      if (drag.nodeId !== "__unclustered__") {
+        onNavigateToCluster(drag.nodeId);
+      }
+    }
+  }, [nodeMap, onSelectQASet, onNavigateToCluster]);
 
   const handleMouseEnter = useCallback(
     (node: LayoutNode, e: React.MouseEvent) => {
@@ -852,35 +902,40 @@ export function LiveActivityGraph({ onSelectQASet, onNavigateToMap, onNavigateTo
           onPointerUp={handlePointerUp}
           onPointerLeave={handlePointerUp}
         >
-          {/* ── Cluster Halos ── */}
-          {halos.map((halo, i) => (
+          {/* ── Cluster Halos (dynamic, draggable) ── */}
+          {dynamicHalos.map((halo, i) => (
             <g
               key={`halo-${halo.id}`}
               style={{
                 animation: `cluster-halo-appear 0.6s ease-out ${i * 100}ms both`,
-                cursor: halo.id !== "__unclustered__" ? "pointer" : "default",
+                cursor: "grab",
               }}
-              onClick={() => {
-                if (halo.id !== "__unclustered__" && onNavigateToCluster) {
-                  onNavigateToCluster(halo.id);
-                }
-              }}
+              onPointerDown={(e) => handlePointerDown(halo.id, e, true)}
             >
               <ellipse
                 cx={halo.cx} cy={halo.cy}
                 rx={halo.rx} ry={halo.ry}
-                fill={halo.color} fillOpacity={0.06}
-                stroke={halo.color} strokeWidth={1} strokeOpacity={0.18}
+                fill={halo.color} fillOpacity={0.08}
+                stroke={halo.color} strokeWidth={1.5} strokeOpacity={0.22}
                 strokeDasharray={halo.id === "__unclustered__" ? "4 3" : undefined}
               />
+              {/* Big centered cluster name */}
+              <text
+                x={halo.cx} y={halo.cy}
+                textAnchor="middle" dominantBaseline="central"
+                fill={halo.color} fillOpacity={0.18}
+                style={{ fontSize: `${Math.min(halo.rx / 3, 24)}px`, fontWeight: 800, pointerEvents: "none" }}
+              >
+                {halo.name}
+              </text>
+              {/* Small label at top */}
               <text
                 x={halo.cx} y={halo.cy - halo.ry + 12}
                 textAnchor="middle"
-                fill={halo.color} fillOpacity={0.6}
-                style={{ fontSize: "9px", fontWeight: 600 }}
+                fill={halo.color} fillOpacity={0.5}
+                style={{ fontSize: "8px", fontWeight: 600, pointerEvents: "none" }}
               >
-                {halo.name}
-                {halo.id !== "__unclustered__" ? " ↗" : ""}
+                {halo.id !== "__unclustered__" ? "클릭: 지도 탐색 · 드래그: 이동" : "미분류"}
               </text>
             </g>
           ))}
