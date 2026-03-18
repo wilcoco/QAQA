@@ -919,15 +919,7 @@ export function LiveActivityGraph({ onSelectQASet, onNavigateToMap, onNavigateTo
                 stroke={halo.color} strokeWidth={1.5} strokeOpacity={0.22}
                 strokeDasharray={halo.id === "__unclustered__" ? "4 3" : undefined}
               />
-              {/* Big centered cluster name */}
-              <text
-                x={halo.cx} y={halo.cy}
-                textAnchor="middle" dominantBaseline="central"
-                fill={halo.color} fillOpacity={0.18}
-                style={{ fontSize: `${Math.min(halo.rx / 3, 24)}px`, fontWeight: 800, pointerEvents: "none" }}
-              >
-                {halo.name}
-              </text>
+              {/* Cluster name rendered in overlay layer below (see "Cluster Name Overlay") */}
               {/* Small label at top */}
               <text
                 x={halo.cx} y={halo.cy - halo.ry + 12}
@@ -1127,6 +1119,37 @@ export function LiveActivityGraph({ onSelectQASet, onNavigateToMap, onNavigateTo
                     )}
                   </>
                 )}
+              </g>
+            );
+          })}
+
+          {/* ── Cluster Name Overlay (rendered ABOVE nodes) ── */}
+          {dynamicHalos.map((halo) => {
+            const fontSize = Math.min(halo.rx / 2.5, 28);
+            // Background rect behind text for readability
+            const textW = halo.name.length * fontSize * 0.6;
+            const textH = fontSize * 1.4;
+            return (
+              <g key={`clabel-${halo.id}`} style={{ pointerEvents: "none" }}>
+                <rect
+                  x={halo.cx - textW / 2 - 6}
+                  y={halo.cy - textH / 2 - 2}
+                  width={textW + 12}
+                  height={textH + 4}
+                  rx={6}
+                  fill="var(--background, white)"
+                  fillOpacity={0.85}
+                />
+                <text
+                  x={halo.cx}
+                  y={halo.cy}
+                  textAnchor="middle"
+                  dominantBaseline="central"
+                  fill={halo.color}
+                  style={{ fontSize: `${fontSize}px`, fontWeight: 800 }}
+                >
+                  {halo.name}
+                </text>
               </g>
             );
           })}
