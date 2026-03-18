@@ -15,6 +15,7 @@ interface GraphNode {
   relationSimple?: string | null;
   clusterId?: string | null;
   clusterName?: string | null;
+  investorId?: string;
 }
 
 interface GraphEdge {
@@ -66,8 +67,8 @@ const NODE_CONFIG: Record<string, {
 }> = {
   question: { fill: "#3b82f6", stroke: "#2563eb", shape: "rect", w: 140, h: 26 },
   answer:   { fill: "#22c55e", stroke: "#16a34a", shape: "rect", w: 140, h: 26 },
-  invest:   { fill: "#f59e0b", stroke: "#d97706", shape: "circle", w: 20, h: 20 },
-  hunt:     { fill: "#ef4444", stroke: "#dc2626", shape: "circle", w: 20, h: 20 },
+  invest:   { fill: "#f59e0b", stroke: "#d97706", shape: "circle", w: 26, h: 26 },
+  hunt:     { fill: "#ef4444", stroke: "#dc2626", shape: "circle", w: 26, h: 26 },
   opinion:  { fill: "#8b5cf6", stroke: "#7c3aed", shape: "rect", w: 120, h: 22 },
   author:   { fill: "#6366f1", stroke: "#4f46e5", shape: "circle", w: 24, h: 24 },
 };
@@ -268,33 +269,100 @@ function computeRadialLayout(
   }
 
   // Satellite nodes
+  // First pass: place authors
   let otherIdx = 0;
+  const deferredNodes: GraphNode[] = [];
   for (const n of otherNodes) {
+    if (n.type === "author") {
+      const cfg = NODE_CONFIG.author;
+      const linkedEdge = edges.find((e) => e.source === n.id || e.target === n.id);
+      const linkedId = linkedEdge
+        ? (linkedEdge.source === n.id ? linkedEdge.target : linkedEdge.source)
+        : null;
+      const linkedPos = linkedId ? nodePositions.get(linkedId) : null;
+
+      let x: number, y: number;
+      if (linkedPos) {
+        const dx = linkedPos.x - cx;
+        const dy = linkedPos.y - cy;
+        const dist = Math.sqrt(dx * dx + dy * dy) || 1;
+        x = linkedPos.x - (dx / dist) * 40;
+        y = linkedPos.y - (dy / dist) * 40;
+      } else {
+        const angle = (otherIdx / Math.max(otherNodes.length, 1)) * Math.PI * 2;
+        x = cx + Math.cos(angle) * ring3;
+        y = cy + Math.sin(angle) * ring3;
+      }
+
+      x = clamp(x, cfg.w / 2 + 4, width - cfg.w / 2 - 4);
+      y = clamp(y, cfg.h / 2 + 4, height - cfg.h / 2 - 4);
+      layout.push({ ...n, x, y, w: cfg.w, h: cfg.h });
+      nodePositions.set(n.id, { x, y });
+      otherIdx++;
+    } else {
+      deferredNodes.push(n);
+    }
+  }
+
+  // Second pass: place invest/hunt/opinion nodes between their linked nodes
+  for (const n of deferredNodes) {
     const cfg = NODE_CONFIG[n.type] ?? NODE_CONFIG.invest;
-    const linkedEdge = edges.find((e) => e.source === n.id || e.target === n.id);
-    const linkedId = linkedEdge
-      ? (linkedEdge.source === n.id ? linkedEdge.target : linkedEdge.source)
-      : null;
-    const linkedPos = linkedId ? nodePositions.get(linkedId) : null;
 
     let x: number, y: number;
-    if (linkedPos) {
-      const dx = linkedPos.x - cx;
-      const dy = linkedPos.y - cy;
-      const dist = Math.sqrt(dx * dx + dy * dy) || 1;
-      const pushDist = n.type === "author" ? -40 : 50;
-      const ySpread = (otherIdx % 3 - 1) * 18;
-      x = linkedPos.x + (dx / dist) * pushDist;
-      y = linkedPos.y + (dy / dist) * pushDist + ySpread;
+
+    if ((n.type === "invest" || n.type === "hunt") && n.investorId) {
+      // Position between investor (author) and target answer
+      const investorPos = nodePositions.get(`author-${n.investorId}`);
+      // Find the target answer this invest links to
+      const targetEdge = edges.find((e) => e.source === n.id && e.type !== "invest" && e.type !== "hunt")
+        ?? edges.find((e) => e.source === n.id);
+      const targetPos = targetEdge ? nodePositions.get(targetEdge.target) : null;
+
+      if (investorPos && targetPos) {
+        // Place at midpoint between investor and answer
+        x = (investorPos.x + targetPos.x) / 2 + (otherIdx % 3 - 1) * 12;
+        y = (investorPos.y + targetPos.y) / 2 + (otherIdx % 3 - 1) * 10;
+      } else if (investorPos) {
+        const dx = investorPos.x - cx;
+        const dy = investorPos.y - cy;
+        const dist = Math.sqrt(dx * dx + dy * dy) || 1;
+        x = investorPos.x + (dx / dist) * 40;
+        y = investorPos.y + (dy / dist) * 40;
+      } else {
+        // Fallback: near any linked node
+        const linkedEdge = edges.find((e) => e.source === n.id || e.target === n.id);
+        const linkedId = linkedEdge ? (linkedEdge.source === n.id ? linkedEdge.target : linkedEdge.source) : null;
+        const linkedPos = linkedId ? nodePositions.get(linkedId) : null;
+        if (linkedPos) {
+          x = linkedPos.x + 50;
+          y = linkedPos.y + (otherIdx % 3 - 1) * 18;
+        } else {
+          x = cx + (otherIdx - deferredNodes.length / 2) * 30;
+          y = height - 30;
+        }
+      }
     } else {
-      const angle = (otherIdx / Math.max(otherNodes.length, 1)) * Math.PI * 2;
-      x = cx + Math.cos(angle) * ring3;
-      y = cy + Math.sin(angle) * ring3;
+      // Opinion and other nodes: near linked node
+      const linkedEdge = edges.find((e) => e.source === n.id || e.target === n.id);
+      const linkedId = linkedEdge
+        ? (linkedEdge.source === n.id ? linkedEdge.target : linkedEdge.source)
+        : null;
+      const linkedPos = linkedId ? nodePositions.get(linkedId) : null;
+      if (linkedPos) {
+        const dx = linkedPos.x - cx;
+        const dy = linkedPos.y - cy;
+        const dist = Math.sqrt(dx * dx + dy * dy) || 1;
+        x = linkedPos.x + (dx / dist) * 50;
+        y = linkedPos.y + (dy / dist) * 50 + (otherIdx % 3 - 1) * 18;
+      } else {
+        const angle = (otherIdx / Math.max(deferredNodes.length, 1)) * Math.PI * 2;
+        x = cx + Math.cos(angle) * ring3;
+        y = cy + Math.sin(angle) * ring3;
+      }
     }
 
     x = clamp(x, cfg.w / 2 + 4, width - cfg.w / 2 - 4);
     y = clamp(y, cfg.h / 2 + 4, height - cfg.h / 2 - 4);
-
     layout.push({ ...n, x, y, w: cfg.w, h: cfg.h });
     nodePositions.set(n.id, { x, y });
     otherIdx++;
@@ -365,6 +433,60 @@ function truncate(s: string, max: number) {
   return s.length > max ? s.slice(0, max) + "..." : s;
 }
 
+// ─── BFS animation order ───
+// Returns: nodeOrder map (nodeId → sequence), edgeOrder map (edgeIndex → sequence)
+// Alternates: node appears → its edges appear → connected nodes appear → ...
+
+function computeBfsOrder(
+  nodes: LayoutNode[],
+  edges: GraphEdge[],
+): { nodeOrder: Map<string, number>; edgeOrder: Map<number, number> } {
+  const nodeOrder = new Map<string, number>();
+  const edgeOrder = new Map<number, number>();
+
+  if (nodes.length === 0) return { nodeOrder, edgeOrder };
+
+  // Build adjacency: nodeId → [{neighborId, edgeIndex}]
+  const adj = new Map<string, { neighborId: string; edgeIdx: number }[]>();
+  for (const n of nodes) adj.set(n.id, []);
+  edges.forEach((e, i) => {
+    adj.get(e.source)?.push({ neighborId: e.target, edgeIdx: i });
+    adj.get(e.target)?.push({ neighborId: e.source, edgeIdx: i });
+  });
+
+  // Start from first question node (first in the data = most recent)
+  const startNode = nodes.find((n) => n.type === "question") ?? nodes[0];
+  let seq = 0;
+
+  const queue: string[] = [startNode.id];
+  nodeOrder.set(startNode.id, seq++);
+
+  while (queue.length > 0) {
+    const current = queue.shift()!;
+    const neighbors = adj.get(current) ?? [];
+    for (const { neighborId, edgeIdx } of neighbors) {
+      if (!edgeOrder.has(edgeIdx)) {
+        edgeOrder.set(edgeIdx, seq++);
+      }
+      if (!nodeOrder.has(neighborId)) {
+        nodeOrder.set(neighborId, seq++);
+        queue.push(neighborId);
+      }
+    }
+  }
+
+  // Handle any disconnected nodes
+  for (const n of nodes) {
+    if (!nodeOrder.has(n.id)) {
+      nodeOrder.set(n.id, seq++);
+    }
+  }
+
+  return { nodeOrder, edgeOrder };
+}
+
+const BFS_STEP_MS = 120; // ms between each BFS step
+
 // ─── Component ───
 
 export function LiveActivityGraph({ onSelectQASet, onNavigateToMap, onNavigateToCluster }: LiveActivityGraphProps) {
@@ -430,6 +552,12 @@ export function LiveActivityGraph({ onSelectQASet, onNavigateToMap, onNavigateTo
     for (const n of layoutNodes) m.set(n.id, n);
     return m;
   }, [layoutNodes]);
+
+  // BFS animation order
+  const { nodeOrder, edgeOrder } = useMemo(
+    () => computeBfsOrder(layoutNodes, edges),
+    [layoutNodes, edges]
+  );
 
   // ─── SVG coordinate helper ───
   const clientToSvg = useCallback((clientX: number, clientY: number) => {
@@ -670,8 +798,11 @@ export function LiveActivityGraph({ onSelectQASet, onNavigateToMap, onNavigateTo
             const midX = (p1.x + p2.x) / 2;
             const midY = (p1.y + p2.y) / 2;
 
+            const eSeq = edgeOrder.get(i) ?? i;
+            const eDelay = eSeq * BFS_STEP_MS;
+
             return (
-              <g key={`e-${i}`}>
+              <g key={`e-${i}`} style={{ opacity: 0, animation: `live-graph-enter 0.4s ease-out ${eDelay}ms forwards` }}>
                 <line
                   x1={p1.x} y1={p1.y} x2={p2.x} y2={p2.y}
                   stroke={color} strokeWidth={strokeW} strokeOpacity={0.45}
@@ -679,7 +810,7 @@ export function LiveActivityGraph({ onSelectQASet, onNavigateToMap, onNavigateTo
                   style={{
                     strokeDashoffset: dash ? 200 : 0,
                     animation: dash
-                      ? `live-graph-edge-draw 0.6s ease-out ${i * 30 + layoutNodes.length * 50}ms forwards`
+                      ? `live-graph-edge-draw 0.6s ease-out ${eDelay}ms forwards`
                       : undefined,
                   }}
                 />
@@ -708,6 +839,8 @@ export function LiveActivityGraph({ onSelectQASet, onNavigateToMap, onNavigateTo
           {/* ── Nodes (draggable) ── */}
           {layoutNodes.map((node, i) => {
             const cfg = NODE_CONFIG[node.type] ?? NODE_CONFIG.question;
+            const nSeq = nodeOrder.get(node.id) ?? i;
+            const nDelay = nSeq * BFS_STEP_MS;
 
             return (
               <g
@@ -715,7 +848,7 @@ export function LiveActivityGraph({ onSelectQASet, onNavigateToMap, onNavigateTo
                 style={{
                   opacity: 0,
                   transformOrigin: `${node.x}px ${node.y}px`,
-                  animation: `live-graph-enter 0.5s ease-out ${i * 50}ms forwards`,
+                  animation: `live-graph-enter 0.5s ease-out ${nDelay}ms forwards`,
                   cursor: dragRef.current?.nodeId === node.id ? "grabbing" : "grab",
                 }}
                 onPointerDown={(e) => handlePointerDown(node.id, e)}
@@ -785,12 +918,15 @@ export function LiveActivityGraph({ onSelectQASet, onNavigateToMap, onNavigateTo
                       textAnchor="middle"
                       dominantBaseline="central"
                       className="fill-foreground"
-                      style={{ fontSize: node.type === "author" ? "7px" : "6px", fontWeight: 600 }}
+                      style={{
+                        fontSize: node.type === "author" ? "7px" : "8px",
+                        fontWeight: 700,
+                      }}
                     >
                       {node.type === "author"
                         ? truncate(node.label, 3)
                         : node.amount
-                          ? `${node.amount}`
+                          ? `${node.amount}P`
                           : node.type === "invest" ? "💰" : "📉"
                       }
                     </text>

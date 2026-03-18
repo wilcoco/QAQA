@@ -97,6 +97,7 @@ export async function GET() {
       relationSimple?: string | null;
       clusterId?: string | null;
       clusterName?: string | null;
+      investorId?: string;
     };
     type GEdge = {
       source: string;
@@ -169,23 +170,45 @@ export async function GET() {
         prevRole = msg.role;
       }
 
-      // 투자 노드
+      // 투자 노드 — 투자자 → 투자(금액) → 답변 구조
       for (const inv of qs.investments.slice(0, 3)) {
         const invNodeId = `inv-${inv.id}`;
+        const investorId = inv.user.id;
+
+        // 투자자 작성자 노드 (없으면 생성)
+        if (!seenAuthors.has(investorId)) {
+          seenAuthors.add(investorId);
+          nodes.push({
+            id: `author-${investorId}`,
+            type: "author",
+            label: inv.user.name ?? "익명",
+            qaSetId: qs.id,
+          });
+        }
+
         nodes.push({
           id: invNodeId,
           type: inv.isNegative ? "hunt" : "invest",
-          label: `${inv.user.name ?? "익명"} ${inv.amount}P`,
+          label: `${inv.amount}P`,
           qaSetId: qs.id,
           amount: inv.amount,
+          investorId,
         });
+
         const targetMsg = qs.messages.filter((m) => m.role === "assistant").pop() ?? qs.messages[0];
         if (targetMsg) {
+          // 투자자 → 투자노드
+          edges.push({
+            source: `author-${investorId}`,
+            target: invNodeId,
+            type: inv.isNegative ? "hunt" : "invest",
+            label: `${inv.amount}P`,
+          });
+          // 투자노드 → 답변
           edges.push({
             source: invNodeId,
             target: targetMsg.id,
             type: inv.isNegative ? "hunt" : "invest",
-            label: `${inv.amount}P`,
           });
         }
       }
