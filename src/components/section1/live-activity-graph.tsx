@@ -85,6 +85,50 @@ const EDGE_STYLES: Record<string, { color: string; dash?: string; width: number 
   author:    { color: "#6366f1", width: 0.8, dash: "2 2" },
 };
 
+// ─── Edge boundary intersection ───
+// Returns the point on the node boundary closest to the target point
+
+function getEdgeEndpoint(
+  node: LayoutNode,
+  targetX: number,
+  targetY: number,
+): { x: number; y: number } {
+  const cfg = NODE_CONFIG[node.type] ?? NODE_CONFIG.question;
+  const dx = targetX - node.x;
+  const dy = targetY - node.y;
+  const dist = Math.sqrt(dx * dx + dy * dy);
+  if (dist === 0) return { x: node.x, y: node.y };
+
+  if (cfg.shape === "circle") {
+    const r = node.w / 2 + 1; // +1 for stroke clearance
+    return {
+      x: node.x + (dx / dist) * r,
+      y: node.y + (dy / dist) * r,
+    };
+  }
+
+  // Rect: find intersection with rectangle boundary
+  const hw = node.w / 2 + 1;
+  const hh = node.h / 2 + 1;
+  const absDx = Math.abs(dx);
+  const absDy = Math.abs(dy);
+
+  // Determine which edge of the rect the line exits through
+  let t: number;
+  if (absDx * hh > absDy * hw) {
+    // Exits through left or right edge
+    t = hw / absDx;
+  } else {
+    // Exits through top or bottom edge
+    t = hh / absDy;
+  }
+
+  return {
+    x: node.x + dx * t,
+    y: node.y + dy * t,
+  };
+}
+
 // ─── Radial Layout ───
 
 function computeRadialLayout(
@@ -113,14 +157,13 @@ function computeRadialLayout(
   }
 
   // Group QASets by cluster
-  const clusterIdMap = new Map<string, string>(); // qaSetId → clusterId
+  const clusterIdMap = new Map<string, string>();
   for (const n of nodes) {
     if (n.clusterId && !clusterIdMap.has(n.qaSetId)) {
       clusterIdMap.set(n.qaSetId, n.clusterId);
     }
   }
 
-  // Build cluster groups: clusterId → qaSetId[]
   const clusterGroups = new Map<string, string[]>();
   const unclusteredSets: string[] = [];
   for (const qaSetId of qaGroups.keys()) {
@@ -134,7 +177,7 @@ function computeRadialLayout(
     }
   }
 
-  // Find hub: QASet with most nodes (proxy for activity)
+  // Find hub
   let hubQASetId = "";
   let maxMsgs = 0;
   for (const [qsId, msgs] of qaGroups) {
@@ -144,33 +187,26 @@ function computeRadialLayout(
     }
   }
 
-  // Assign angular sectors to clusters
-  const totalSets = qaGroups.size;
-  const MIN_ANGLE = (40 * Math.PI) / 180; // 40 degrees min per cluster
+  // Assign angular sectors
+  const MIN_ANGLE = (40 * Math.PI) / 180;
   const allClusterIds = [...clusterGroups.keys()];
   if (unclusteredSets.length > 0) allClusterIds.push("__unclustered__");
 
   const sectorAngles: { id: string; startAngle: number; endAngle: number; qaSetIds: string[] }[] = [];
   if (allClusterIds.length === 0) {
-    // No clusters at all, place everything in a full circle
     sectorAngles.push({ id: "__all__", startAngle: 0, endAngle: Math.PI * 2, qaSetIds: [...qaGroups.keys()] });
   } else {
-    const totalAngle = Math.PI * 2;
-    let remainingAngle = totalAngle;
     const clusterSizes: { id: string; count: number; qaSetIds: string[] }[] = [];
     for (const cid of allClusterIds) {
       const qaSetIds = cid === "__unclustered__" ? unclusteredSets : (clusterGroups.get(cid) ?? []);
       clusterSizes.push({ id: cid, count: qaSetIds.length, qaSetIds });
     }
-    // Calculate proportional angles with minimum
+    const totalAngle = Math.PI * 2;
     const totalCount = clusterSizes.reduce((s, c) => s + c.count, 0);
-    let currentAngle = -Math.PI / 2; // start from top
+    let currentAngle = -Math.PI / 2;
     for (const cs of clusterSizes) {
       const proportion = cs.count / Math.max(totalCount, 1);
-      let angle = Math.max(MIN_ANGLE, proportion * totalAngle);
-      if (currentAngle + angle > Math.PI * 2 - Math.PI / 2) {
-        angle = Math.PI * 2 - Math.PI / 2 - currentAngle + Math.PI * 2; // wrap
-      }
+      const angle = Math.max(MIN_ANGLE, proportion * totalAngle);
       sectorAngles.push({
         id: cs.id,
         startAngle: currentAngle,
@@ -179,30 +215,26 @@ function computeRadialLayout(
       });
       currentAngle += angle;
     }
-    // Normalize to fill exactly 2π
-    if (sectorAngles.length > 0) {
-      const total = sectorAngles.reduce((s, sa) => s + (sa.endAngle - sa.startAngle), 0);
-      const scale = totalAngle / total;
-      let accum = -Math.PI / 2;
-      for (const sa of sectorAngles) {
-        const size = (sa.endAngle - sa.startAngle) * scale;
-        sa.startAngle = accum;
-        sa.endAngle = accum + size;
-        accum += size;
-      }
+    // Normalize
+    const total = sectorAngles.reduce((s, sa) => s + (sa.endAngle - sa.startAngle), 0);
+    const scale = totalAngle / total;
+    let accum = -Math.PI / 2;
+    for (const sa of sectorAngles) {
+      const size = (sa.endAngle - sa.startAngle) * scale;
+      sa.startAngle = accum;
+      sa.endAngle = accum + size;
+      accum += size;
     }
   }
 
   const layout: LayoutNode[] = [];
   const nodePositions = new Map<string, { x: number; y: number }>();
 
-  // Radii for concentric rings
   const baseRadius = Math.min(width, height) * 0.16;
   const ring1 = baseRadius;
   const ring2 = baseRadius * 1.8;
   const ring3 = baseRadius * 2.5;
 
-  // Place QASet groups within their cluster sectors
   for (const sector of sectorAngles) {
     const setCount = sector.qaSetIds.length;
     if (setCount === 0) continue;
@@ -214,21 +246,17 @@ function computeRadialLayout(
       const qaSetId = sector.qaSetIds[si];
       const msgs = qaGroups.get(qaSetId) ?? [];
 
-      // Angle within sector
       const angleOffset = setCount === 1
         ? 0
         : ((si / (setCount - 1)) - 0.5) * sectorSpan * 0.7;
       const angle = sectorMid + angleOffset;
 
-      // Ring: hub at ring1, others at ring2/ring3
       const isHub = qaSetId === hubQASetId;
       const ring = isHub ? ring1 : (si < Math.ceil(setCount / 2) ? ring2 : ring3);
 
-      // Base position for this QASet
       const groupX = cx + Math.cos(angle) * ring;
       const groupY = cy + Math.sin(angle) * ring;
 
-      // Place messages as vertical chain
       msgs.forEach((msg, mi) => {
         const cfg = NODE_CONFIG[msg.type] ?? NODE_CONFIG.question;
         const x = clamp(groupX, cfg.w / 2 + 4, width - cfg.w / 2 - 4);
@@ -239,7 +267,7 @@ function computeRadialLayout(
     }
   }
 
-  // Place satellite nodes (invest, hunt, opinion, author) near their linked nodes
+  // Satellite nodes
   let otherIdx = 0;
   for (const n of otherNodes) {
     const cfg = NODE_CONFIG[n.type] ?? NODE_CONFIG.invest;
@@ -251,7 +279,6 @@ function computeRadialLayout(
 
     let x: number, y: number;
     if (linkedPos) {
-      // Push outward from center
       const dx = linkedPos.x - cx;
       const dy = linkedPos.y - cy;
       const dist = Math.sqrt(dx * dx + dy * dy) || 1;
@@ -280,18 +307,15 @@ function computeRadialLayout(
 
   for (const sector of sectorAngles) {
     if (sector.id === "__all__" || sector.id === "__unclustered__") {
-      // Build unclustered halo
-      const unclusteredPositions: { x: number; y: number }[] = [];
+      const positions: { x: number; y: number }[] = [];
       for (const qsId of sector.qaSetIds) {
-        const msgs = qaGroups.get(qsId) ?? [];
-        for (const msg of msgs) {
+        for (const msg of (qaGroups.get(qsId) ?? [])) {
           const pos = nodePositions.get(msg.id);
-          if (pos) unclusteredPositions.push(pos);
+          if (pos) positions.push(pos);
         }
       }
-      if (unclusteredPositions.length > 0 && sector.id === "__unclustered__") {
-        const halo = computeHalo(unclusteredPositions, "__unclustered__", "기타", "#9ca3af");
-        halos.push(halo);
+      if (positions.length > 0 && sector.id === "__unclustered__") {
+        halos.push(computeHalo(positions, "__unclustered__", "기타", "#9ca3af"));
       }
       continue;
     }
@@ -301,8 +325,7 @@ function computeRadialLayout(
 
     const positions: { x: number; y: number }[] = [];
     for (const qsId of sector.qaSetIds) {
-      const msgs = qaGroups.get(qsId) ?? [];
-      for (const msg of msgs) {
+      for (const msg of (qaGroups.get(qsId) ?? [])) {
         const pos = nodePositions.get(msg.id);
         if (pos) positions.push(pos);
       }
@@ -325,11 +348,13 @@ function computeHalo(
   const maxX = Math.max(...xs);
   const minY = Math.min(...ys);
   const maxY = Math.max(...ys);
-  const haloCx = (minX + maxX) / 2;
-  const haloCy = (minY + maxY) / 2;
-  const haloRx = Math.max((maxX - minX) / 2 + 40, 50);
-  const haloRy = Math.max((maxY - minY) / 2 + 30, 40);
-  return { id, name, color, cx: haloCx, cy: haloCy, rx: haloRx, ry: haloRy };
+  return {
+    id, name, color,
+    cx: (minX + maxX) / 2,
+    cy: (minY + maxY) / 2,
+    rx: Math.max((maxX - minX) / 2 + 40, 50),
+    ry: Math.max((maxY - minY) / 2 + 30, 40),
+  };
 }
 
 function clamp(v: number, min: number, max: number) {
@@ -349,7 +374,19 @@ export function LiveActivityGraph({ onSelectQASet, onNavigateToMap, onNavigateTo
   const [loading, setLoading] = useState(true);
   const [tooltip, setTooltip] = useState<{ node: LayoutNode; x: number; y: number } | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  const svgRef = useRef<SVGSVGElement>(null);
   const abortRef = useRef<AbortController | null>(null);
+
+  // Drag state
+  const [dragOffsets, setDragOffsets] = useState<Map<string, { dx: number; dy: number }>>(new Map());
+  const dragRef = useRef<{
+    nodeId: string;
+    startSvgX: number;
+    startSvgY: number;
+    origDx: number;
+    origDy: number;
+    moved: boolean;
+  } | null>(null);
 
   const isMobile = typeof window !== "undefined" && window.innerWidth < 768;
   const vw = isMobile ? 400 : 800;
@@ -373,10 +410,20 @@ export function LiveActivityGraph({ onSelectQASet, onNavigateToMap, onNavigateTo
     return () => ctrl.abort();
   }, []);
 
-  const { layoutNodes, halos } = useMemo(() => {
+  const { baseLayoutNodes, halos } = useMemo(() => {
     const result = computeRadialLayout(rawNodes, edges, clusters, vw, vh);
-    return { layoutNodes: result.layout, halos: result.halos };
+    return { baseLayoutNodes: result.layout, halos: result.halos };
   }, [rawNodes, edges, clusters, vw, vh]);
+
+  // Apply drag offsets to get final positions
+  const layoutNodes = useMemo(() => {
+    if (dragOffsets.size === 0) return baseLayoutNodes;
+    return baseLayoutNodes.map((n) => {
+      const off = dragOffsets.get(n.id);
+      if (!off) return n;
+      return { ...n, x: n.x + off.dx, y: n.y + off.dy };
+    });
+  }, [baseLayoutNodes, dragOffsets]);
 
   const nodeMap = useMemo(() => {
     const m = new Map<string, LayoutNode>();
@@ -384,15 +431,78 @@ export function LiveActivityGraph({ onSelectQASet, onNavigateToMap, onNavigateTo
     return m;
   }, [layoutNodes]);
 
+  // ─── SVG coordinate helper ───
+  const clientToSvg = useCallback((clientX: number, clientY: number) => {
+    const svg = svgRef.current;
+    if (!svg) return { x: 0, y: 0 };
+    const pt = svg.createSVGPoint();
+    pt.x = clientX;
+    pt.y = clientY;
+    const ctm = svg.getScreenCTM();
+    if (!ctm) return { x: 0, y: 0 };
+    const svgPt = pt.matrixTransform(ctm.inverse());
+    return { x: svgPt.x, y: svgPt.y };
+  }, []);
+
+  // ─── Drag handlers ───
+  const handlePointerDown = useCallback((nodeId: string, e: React.PointerEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    (e.target as Element).setPointerCapture?.(e.pointerId);
+    const svgPt = clientToSvg(e.clientX, e.clientY);
+    const existing = dragOffsets.get(nodeId);
+    dragRef.current = {
+      nodeId,
+      startSvgX: svgPt.x,
+      startSvgY: svgPt.y,
+      origDx: existing?.dx ?? 0,
+      origDy: existing?.dy ?? 0,
+      moved: false,
+    };
+    setTooltip(null);
+  }, [clientToSvg, dragOffsets]);
+
+  const handlePointerMove = useCallback((e: React.PointerEvent) => {
+    const drag = dragRef.current;
+    if (!drag) return;
+    const svgPt = clientToSvg(e.clientX, e.clientY);
+    const dx = svgPt.x - drag.startSvgX;
+    const dy = svgPt.y - drag.startSvgY;
+    if (!drag.moved && Math.abs(dx) + Math.abs(dy) > 3) {
+      drag.moved = true;
+    }
+    if (drag.moved) {
+      setDragOffsets((prev) => {
+        const next = new Map(prev);
+        next.set(drag.nodeId, { dx: drag.origDx + dx, dy: drag.origDy + dy });
+        return next;
+      });
+    }
+  }, [clientToSvg]);
+
+  const handlePointerUp = useCallback((e: React.PointerEvent) => {
+    const drag = dragRef.current;
+    dragRef.current = null;
+    if (!drag) return;
+    // If didn't move, treat as click
+    if (!drag.moved) {
+      const node = nodeMap.get(drag.nodeId);
+      if (node) onSelectQASet(node.qaSetId);
+    }
+  }, [nodeMap, onSelectQASet]);
+
   const handleMouseEnter = useCallback(
     (node: LayoutNode, e: React.MouseEvent) => {
+      if (dragRef.current) return;
       const rect = containerRef.current?.getBoundingClientRect();
       if (!rect) return;
       setTooltip({ node, x: e.clientX - rect.left, y: e.clientY - rect.top });
     },
     []
   );
-  const handleMouseLeave = useCallback(() => setTooltip(null), []);
+  const handleMouseLeave = useCallback(() => {
+    if (!dragRef.current) setTooltip(null);
+  }, []);
 
   const qaSetCount = useMemo(() => {
     const s = new Set<string>();
@@ -478,7 +588,6 @@ export function LiveActivityGraph({ onSelectQASet, onNavigateToMap, onNavigateTo
           <svg width="16" height="6"><line x1="0" y1="3" x2="16" y2="3" stroke="#94a3b8" strokeWidth="2" /></svg>
           확정
         </span>
-        {/* Cluster legend */}
         {clusters.map((c) => (
           <span key={c.id} className="flex items-center gap-1">
             <span className="inline-block w-2.5 h-2.5 rounded-full" style={{ backgroundColor: c.color, opacity: 0.5 }} />
@@ -489,9 +598,13 @@ export function LiveActivityGraph({ onSelectQASet, onNavigateToMap, onNavigateTo
 
       <div className="relative rounded-xl border bg-card/50 overflow-hidden">
         <svg
+          ref={svgRef}
           viewBox={`0 0 ${vw} ${vh}`}
           className="w-full h-auto"
-          style={{ maxHeight: isMobile ? 300 : 420 }}
+          style={{ maxHeight: isMobile ? 300 : 420, touchAction: "none" }}
+          onPointerMove={handlePointerMove}
+          onPointerUp={handlePointerUp}
+          onPointerLeave={handlePointerUp}
         >
           {/* ── Cluster Halos ── */}
           {halos.map((halo, i) => (
@@ -526,7 +639,7 @@ export function LiveActivityGraph({ onSelectQASet, onNavigateToMap, onNavigateTo
             </g>
           ))}
 
-          {/* ── Edges ── */}
+          {/* ── Edges (with boundary intersection) ── */}
           {edges.map((edge, i) => {
             const src = nodeMap.get(edge.source);
             const tgt = nodeMap.get(edge.target);
@@ -550,13 +663,17 @@ export function LiveActivityGraph({ onSelectQASet, onNavigateToMap, onNavigateTo
               }
             }
 
-            const midX = (src.x + tgt.x) / 2;
-            const midY = (src.y + tgt.y) / 2;
+            // Compute edge endpoints at node boundaries
+            const p1 = getEdgeEndpoint(src, tgt.x, tgt.y);
+            const p2 = getEdgeEndpoint(tgt, src.x, src.y);
+
+            const midX = (p1.x + p2.x) / 2;
+            const midY = (p1.y + p2.y) / 2;
 
             return (
               <g key={`e-${i}`}>
                 <line
-                  x1={src.x} y1={src.y} x2={tgt.x} y2={tgt.y}
+                  x1={p1.x} y1={p1.y} x2={p2.x} y2={p2.y}
                   stroke={color} strokeWidth={strokeW} strokeOpacity={0.45}
                   strokeDasharray={dash}
                   style={{
@@ -566,7 +683,6 @@ export function LiveActivityGraph({ onSelectQASet, onNavigateToMap, onNavigateTo
                       : undefined,
                   }}
                 />
-                {/* Edge label */}
                 {edge.label && (edge.type === "knowledge" || edge.type === "followup" || edge.type === "opinion") && (
                   <g>
                     <rect
@@ -589,7 +705,7 @@ export function LiveActivityGraph({ onSelectQASet, onNavigateToMap, onNavigateTo
             );
           })}
 
-          {/* ── Nodes ── */}
+          {/* ── Nodes (draggable) ── */}
           {layoutNodes.map((node, i) => {
             const cfg = NODE_CONFIG[node.type] ?? NODE_CONFIG.question;
 
@@ -600,13 +716,13 @@ export function LiveActivityGraph({ onSelectQASet, onNavigateToMap, onNavigateTo
                   opacity: 0,
                   transformOrigin: `${node.x}px ${node.y}px`,
                   animation: `live-graph-enter 0.5s ease-out ${i * 50}ms forwards`,
-                  cursor: "pointer",
+                  cursor: dragRef.current?.nodeId === node.id ? "grabbing" : "grab",
                 }}
-                onClick={() => onSelectQASet(node.qaSetId)}
+                onPointerDown={(e) => handlePointerDown(node.id, e)}
                 onMouseEnter={(e) => handleMouseEnter(node, e)}
                 onMouseLeave={handleMouseLeave}
               >
-                {/* ── Rect nodes: question, answer, opinion ── */}
+                {/* ── Rect nodes ── */}
                 {cfg.shape === "rect" && (
                   <>
                     <rect
@@ -621,7 +737,6 @@ export function LiveActivityGraph({ onSelectQASet, onNavigateToMap, onNavigateTo
                       strokeWidth={1.2}
                       strokeOpacity={0.5}
                     />
-                    {/* Type badge */}
                     <rect
                       x={node.x - node.w / 2 + 2}
                       y={node.y - node.h / 2 + 2}
@@ -641,7 +756,6 @@ export function LiveActivityGraph({ onSelectQASet, onNavigateToMap, onNavigateTo
                     >
                       {node.type === "question" ? "Q" : node.type === "answer" ? "A" : "✍"}
                     </text>
-                    {/* Content text */}
                     <text
                       x={node.x - node.w / 2 + (node.type === "opinion" ? 18 : 14)}
                       y={node.y + 1}
@@ -654,7 +768,7 @@ export function LiveActivityGraph({ onSelectQASet, onNavigateToMap, onNavigateTo
                   </>
                 )}
 
-                {/* ── Circle nodes: invest, hunt, author ── */}
+                {/* ── Circle nodes ── */}
                 {cfg.shape === "circle" && (
                   <>
                     <circle
@@ -680,7 +794,6 @@ export function LiveActivityGraph({ onSelectQASet, onNavigateToMap, onNavigateTo
                           : node.type === "invest" ? "💰" : "📉"
                       }
                     </text>
-                    {/* Label below circle (desktop) */}
                     {!isMobile && (
                       <text
                         x={node.x} y={node.y + node.w / 2 + 8}
@@ -733,7 +846,7 @@ export function LiveActivityGraph({ onSelectQASet, onNavigateToMap, onNavigateTo
             {tooltip.node.relationSimple && (
               <div className="mt-1 text-[10px] text-primary">관계: {tooltip.node.relationSimple}</div>
             )}
-            <div className="mt-1 text-[10px] text-muted-foreground">클릭하여 열기</div>
+            <div className="mt-1 text-[10px] text-muted-foreground">드래그하여 이동 · 클릭하여 열기</div>
           </div>
         )}
       </div>

@@ -250,6 +250,12 @@ export function Section1QuestionInput({ onNewQuestion, onSelectSharedQA, onAnswe
           {/* ══════ Search Results ══════ */}
           {search && (
             <div>
+              {/* 검색 시에도 지식 네트워크 그래프 표시 */}
+              <LiveActivityGraph
+                onSelectQASet={onSelectSharedQA}
+                onNavigateToMap={onNavigateToMap}
+                onNavigateToCluster={onNavigateToCluster}
+              />
               <div className="flex items-center justify-between mb-2">
                 <p className="text-sm text-muted-foreground">
                   <span className="font-medium text-foreground">&ldquo;{search.query}&rdquo;</span>{" "}
