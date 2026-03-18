@@ -368,6 +368,53 @@ function computeRadialLayout(
     otherIdx++;
   }
 
+  // ─── Collision resolution (iterative repulsion) ───
+  const PAD = 6; // minimum gap between nodes
+  const ITERATIONS = 12;
+  for (let iter = 0; iter < ITERATIONS; iter++) {
+    let anyMoved = false;
+    for (let a = 0; a < layout.length; a++) {
+      for (let b = a + 1; b < layout.length; b++) {
+        const na = layout[a];
+        const nb = layout[b];
+        const dx = nb.x - na.x;
+        const dy = nb.y - na.y;
+
+        // Required separation (half-widths + half-heights + pad)
+        const overlapX = (na.w + nb.w) / 2 + PAD - Math.abs(dx);
+        const overlapY = (na.h + nb.h) / 2 + PAD - Math.abs(dy);
+
+        if (overlapX > 0 && overlapY > 0) {
+          // Push apart along the axis with less overlap
+          anyMoved = true;
+          if (overlapX < overlapY) {
+            const push = overlapX / 2 + 0.5;
+            const signX = dx >= 0 ? 1 : -1;
+            na.x -= signX * push;
+            nb.x += signX * push;
+          } else {
+            const push = overlapY / 2 + 0.5;
+            const signY = dy >= 0 ? 1 : -1;
+            na.y -= signY * push;
+            nb.y += signY * push;
+          }
+
+          // Clamp back into viewport
+          na.x = clamp(na.x, na.w / 2 + 2, width - na.w / 2 - 2);
+          na.y = clamp(na.y, na.h / 2 + 2, height - na.h / 2 - 2);
+          nb.x = clamp(nb.x, nb.w / 2 + 2, width - nb.w / 2 - 2);
+          nb.y = clamp(nb.y, nb.h / 2 + 2, height - nb.h / 2 - 2);
+        }
+      }
+    }
+    if (!anyMoved) break;
+  }
+
+  // Update nodePositions after collision resolution
+  for (const n of layout) {
+    nodePositions.set(n.id, { x: n.x, y: n.y });
+  }
+
   // Build cluster halos
   const halos: ClusterHalo[] = [];
   const clusterInfoMap = new Map<string, ClusterInfo>();
