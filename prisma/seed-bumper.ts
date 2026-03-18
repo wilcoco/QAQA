@@ -246,8 +246,8 @@ async function main() {
   // ── 5. ClusterRelation ──
   await prisma.clusterRelation.createMany({
     data: [
-      { sourceClusterId: cluster1.id, targetClusterId: cluster3.id, relationType: "related", weight: 2.0, label: "관련" },
-      { sourceClusterId: cluster2.id, targetClusterId: cluster3.id, relationType: "related", weight: 1.5, label: "관련" },
+      { sourceClusterId: cluster1.id, targetClusterId: cluster3.id, relationType: "narrower", weight: 2.0, label: "하위" },
+      { sourceClusterId: cluster2.id, targetClusterId: cluster3.id, relationType: "narrower", weight: 1.5, label: "하위" },
       { sourceClusterId: cluster1.id, targetClusterId: cluster2.id, relationType: "related", weight: 1.0, label: "관련" },
     ],
   });
