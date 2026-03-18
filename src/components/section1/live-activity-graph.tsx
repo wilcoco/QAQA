@@ -56,6 +56,8 @@ interface LiveActivityGraphProps {
   onSelectQASet: (qaSetId: string) => void;
   onNavigateToMap?: () => void;
   onNavigateToCluster?: (clusterId: string) => void;
+  /** When set, only show nodes belonging to these QASet IDs */
+  filterQASetIds?: string[];
 }
 
 // ─── Node dimensions ───
@@ -536,7 +538,7 @@ const BFS_STEP_MS = 120; // ms between each BFS step
 
 // ─── Component ───
 
-export function LiveActivityGraph({ onSelectQASet, onNavigateToMap, onNavigateToCluster }: LiveActivityGraphProps) {
+export function LiveActivityGraph({ onSelectQASet, onNavigateToMap, onNavigateToCluster, filterQASetIds }: LiveActivityGraphProps) {
   const [rawNodes, setRawNodes] = useState<GraphNode[]>([]);
   const [edges, setEdges] = useState<GraphEdge[]>([]);
   const [clusters, setClusters] = useState<ClusterInfo[]>([]);
@@ -579,10 +581,23 @@ export function LiveActivityGraph({ onSelectQASet, onNavigateToMap, onNavigateTo
     return () => ctrl.abort();
   }, []);
 
+  // Filter nodes/edges when filterQASetIds is provided
+  const { filteredNodes, filteredEdges, filteredClusters } = useMemo(() => {
+    if (!filterQASetIds || filterQASetIds.length === 0) {
+      return { filteredNodes: rawNodes, filteredEdges: edges, filteredClusters: clusters };
+    }
+    const idSet = new Set(filterQASetIds);
+    const fn = rawNodes.filter((n) => idSet.has(n.qaSetId));
+    const nodeIdSet = new Set(fn.map((n) => n.id));
+    const fe = edges.filter((e) => nodeIdSet.has(e.source) || nodeIdSet.has(e.target));
+    const fc = clusters.filter((c) => c.nodeIds.some((nid) => nodeIdSet.has(nid)));
+    return { filteredNodes: fn, filteredEdges: fe, filteredClusters: fc };
+  }, [rawNodes, edges, clusters, filterQASetIds]);
+
   const { baseLayoutNodes, halos } = useMemo(() => {
-    const result = computeRadialLayout(rawNodes, edges, clusters, vw, vh);
+    const result = computeRadialLayout(filteredNodes, filteredEdges, filteredClusters, vw, vh);
     return { baseLayoutNodes: result.layout, halos: result.halos };
-  }, [rawNodes, edges, clusters, vw, vh]);
+  }, [filteredNodes, filteredEdges, filteredClusters, vw, vh]);
 
   // Apply drag offsets to get final positions
   const layoutNodes = useMemo(() => {
