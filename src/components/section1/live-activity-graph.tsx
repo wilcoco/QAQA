@@ -370,52 +370,7 @@ function computeRadialLayout(
     otherIdx++;
   }
 
-  // ─── Collision resolution (iterative repulsion) ───
-  const PAD = 14; // minimum gap between nodes (increased from 6)
-  const ITERATIONS = 30;
-  for (let iter = 0; iter < ITERATIONS; iter++) {
-    let anyMoved = false;
-    for (let a = 0; a < layout.length; a++) {
-      for (let b = a + 1; b < layout.length; b++) {
-        const na = layout[a];
-        const nb = layout[b];
-        const dx = nb.x - na.x;
-        const dy = nb.y - na.y;
-
-        // Required separation (half-widths + half-heights + pad)
-        const overlapX = (na.w + nb.w) / 2 + PAD - Math.abs(dx);
-        const overlapY = (na.h + nb.h) / 2 + PAD - Math.abs(dy);
-
-        if (overlapX > 0 && overlapY > 0) {
-          // Push apart along the axis with less overlap
-          anyMoved = true;
-          if (overlapX < overlapY) {
-            const push = overlapX / 2 + 0.5;
-            const signX = dx >= 0 ? 1 : -1;
-            na.x -= signX * push;
-            nb.x += signX * push;
-          } else {
-            const push = overlapY / 2 + 0.5;
-            const signY = dy >= 0 ? 1 : -1;
-            na.y -= signY * push;
-            nb.y += signY * push;
-          }
-
-          // Clamp back into viewport
-          na.x = clamp(na.x, na.w / 2 + 2, width - na.w / 2 - 2);
-          na.y = clamp(na.y, na.h / 2 + 2, height - na.h / 2 - 2);
-          nb.x = clamp(nb.x, nb.w / 2 + 2, width - nb.w / 2 - 2);
-          nb.y = clamp(nb.y, nb.h / 2 + 2, height - nb.h / 2 - 2);
-        }
-      }
-    }
-    if (!anyMoved) break;
-  }
-
-  // Update nodePositions after collision resolution
-  for (const n of layout) {
-    nodePositions.set(n.id, { x: n.x, y: n.y });
-  }
+  // Note: collision resolution is now done live via force simulation in the component
 
   // Build cluster halos
   const halos: ClusterHalo[] = [];
@@ -534,7 +489,7 @@ function computeBfsOrder(
   return { nodeOrder, edgeOrder };
 }
 
-const BFS_STEP_MS = 120; // ms between each BFS step
+// BFS step base is now 80ms + random jitter per node (see nodeDelays/edgeDelays)
 
 // ─── Component ───
 
@@ -599,15 +554,93 @@ export function LiveActivityGraph({ onSelectQASet, onNavigateToMap, onNavigateTo
     return { baseLayoutNodes: result.layout, halos: result.halos };
   }, [filteredNodes, filteredEdges, filteredClusters, vw, vh]);
 
-  // Apply drag offsets to get final positions
+  // ─── Force simulation for live collision resolution ───
+  const [forceOffsets, setForceOffsets] = useState<Map<string, { dx: number; dy: number }>>(new Map());
+  const forceRef = useRef<Map<string, { dx: number; dy: number }>>(new Map());
+  const rafRef = useRef<number>(0);
+
+  useEffect(() => {
+    if (baseLayoutNodes.length === 0) return;
+
+    const PAD = 16;
+    let frame = 0;
+    const maxFrames = 120; // ~2 seconds at 60fps
+    forceRef.current = new Map();
+
+    const step = () => {
+      const offsets = forceRef.current;
+      let anyPush = false;
+
+      for (let a = 0; a < baseLayoutNodes.length; a++) {
+        for (let b = a + 1; b < baseLayoutNodes.length; b++) {
+          const na = baseLayoutNodes[a];
+          const nb = baseLayoutNodes[b];
+          const oa = offsets.get(na.id) ?? { dx: 0, dy: 0 };
+          const ob = offsets.get(nb.id) ?? { dx: 0, dy: 0 };
+
+          const ax = na.x + oa.dx, ay = na.y + oa.dy;
+          const bx = nb.x + ob.dx, by = nb.y + ob.dy;
+          const dx = bx - ax, dy = by - ay;
+
+          const overlapX = (na.w + nb.w) / 2 + PAD - Math.abs(dx);
+          const overlapY = (na.h + nb.h) / 2 + PAD - Math.abs(dy);
+
+          if (overlapX > 0 && overlapY > 0) {
+            anyPush = true;
+            const force = 0.3; // soft push per frame
+            if (overlapX < overlapY) {
+              const push = overlapX * force;
+              const sx = dx >= 0 ? 1 : -1;
+              offsets.set(na.id, { dx: oa.dx - sx * push, dy: oa.dy });
+              offsets.set(nb.id, { dx: ob.dx + sx * push, dy: ob.dy });
+            } else {
+              const push = overlapY * force;
+              const sy = dy >= 0 ? 1 : -1;
+              offsets.set(na.id, { dx: oa.dx, dy: oa.dy - sy * push });
+              offsets.set(nb.id, { dx: ob.dx, dy: ob.dy + sy * push });
+            }
+
+            // Clamp
+            for (const n of [na, nb]) {
+              const o = offsets.get(n.id)!;
+              o.dx = clamp(n.x + o.dx, n.w / 2 + 2, vw - n.w / 2 - 2) - n.x;
+              o.dy = clamp(n.y + o.dy, n.h / 2 + 2, vh - n.h / 2 - 2) - n.y;
+            }
+          }
+        }
+      }
+
+      frame++;
+      if (anyPush || frame < 10) {
+        setForceOffsets(new Map(offsets));
+      }
+      if (anyPush && frame < maxFrames) {
+        rafRef.current = requestAnimationFrame(step);
+      }
+    };
+
+    // Start after nodes have appeared (~1s delay)
+    const timer = setTimeout(() => {
+      rafRef.current = requestAnimationFrame(step);
+    }, 800);
+
+    return () => {
+      clearTimeout(timer);
+      cancelAnimationFrame(rafRef.current);
+    };
+  }, [baseLayoutNodes, vw, vh]);
+
+  // Apply drag + force offsets to get final positions
   const layoutNodes = useMemo(() => {
-    if (dragOffsets.size === 0) return baseLayoutNodes;
     return baseLayoutNodes.map((n) => {
-      const off = dragOffsets.get(n.id);
-      if (!off) return n;
-      return { ...n, x: n.x + off.dx, y: n.y + off.dy };
+      const fo = forceOffsets.get(n.id);
+      const dr = dragOffsets.get(n.id);
+      const dx = (fo?.dx ?? 0) + (dr?.dx ?? 0);
+      const dy = (fo?.dy ?? 0) + (dr?.dy ?? 0);
+      if (dx === 0 && dy === 0) return n;
+      return { ...n, x: n.x + dx, y: n.y + dy };
     });
-  }, [baseLayoutNodes, dragOffsets]);
+  }, [baseLayoutNodes, forceOffsets, dragOffsets]);
 
   const nodeMap = useMemo(() => {
     const m = new Map<string, LayoutNode>();
@@ -615,11 +648,34 @@ export function LiveActivityGraph({ onSelectQASet, onNavigateToMap, onNavigateTo
     return m;
   }, [layoutNodes]);
 
-  // BFS animation order
+  // BFS order + randomized delays
   const { nodeOrder, edgeOrder } = useMemo(
     () => computeBfsOrder(layoutNodes, edges),
     [layoutNodes, edges]
   );
+
+  // Stable random delays per node (seeded by id)
+  const nodeDelays = useMemo(() => {
+    const m = new Map<string, number>();
+    for (const n of layoutNodes) {
+      const seq = nodeOrder.get(n.id) ?? 0;
+      // Hash the id to get consistent random jitter
+      let hash = 0;
+      for (let i = 0; i < n.id.length; i++) hash = ((hash << 5) - hash + n.id.charCodeAt(i)) | 0;
+      const jitter = (Math.abs(hash) % 400); // 0~400ms random jitter
+      m.set(n.id, seq * 80 + jitter); // base 80ms per BFS step + random
+    }
+    return m;
+  }, [layoutNodes, nodeOrder]);
+
+  const edgeDelays = useMemo(() => {
+    const m = new Map<number, number>();
+    edges.forEach((_, i) => {
+      const seq = edgeOrder.get(i) ?? i;
+      m.set(i, seq * 80 + Math.abs((i * 7919) % 300)); // deterministic jitter
+    });
+    return m;
+  }, [edges, edgeOrder]);
 
   // ─── SVG coordinate helper ───
   const clientToSvg = useCallback((clientX: number, clientY: number) => {
@@ -860,8 +916,7 @@ export function LiveActivityGraph({ onSelectQASet, onNavigateToMap, onNavigateTo
             const midX = (p1.x + p2.x) / 2;
             const midY = (p1.y + p2.y) / 2;
 
-            const eSeq = edgeOrder.get(i) ?? i;
-            const eDelay = eSeq * BFS_STEP_MS;
+            const eDelay = edgeDelays.get(i) ?? (i * 80);
 
             return (
               <g key={`e-${i}`} style={{ opacity: 0, animation: `live-graph-enter 0.4s ease-out ${eDelay}ms forwards` }}>
@@ -901,8 +956,7 @@ export function LiveActivityGraph({ onSelectQASet, onNavigateToMap, onNavigateTo
           {/* ── Nodes (draggable) ── */}
           {layoutNodes.map((node, i) => {
             const cfg = NODE_CONFIG[node.type] ?? NODE_CONFIG.question;
-            const nSeq = nodeOrder.get(node.id) ?? i;
-            const nDelay = nSeq * BFS_STEP_MS;
+            const nDelay = nodeDelays.get(node.id) ?? (i * 80);
 
             // Importance-based pop scale: bigger pop for higher investment/amount
             const importance = node.amount
