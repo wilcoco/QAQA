@@ -2,6 +2,8 @@
 
 import { useState, useEffect, useCallback, useRef } from "react";
 import { Badge } from "@/components/ui/badge";
+import { ClusterCreateDialog } from "@/components/cluster/cluster-create-dialog";
+import { ClusterMembersPanel } from "@/components/cluster/cluster-members-panel";
 
 // ══════════════════════════════════════════════
 // Types
@@ -242,6 +244,7 @@ export function NavigableKnowledgeMap({
   const [clusterEdges, setClusterEdges] = useState<ClusterEdge[]>([]);
   const [clusterLoaded, setClusterLoaded] = useState(false);
   const [selectedClusterId, setSelectedClusterId] = useState<string | null>(null);
+  const [showMembersFor, setShowMembersFor] = useState<string | null>(null);
   const [focalClusterId, setFocalClusterId] = useState<string | null>(null);
   const clusterLoadedRef = useRef<string | null>(null);
 
@@ -709,6 +712,29 @@ export function NavigableKnowledgeMap({
           </>
         )}
 
+        {/* Cluster create + members */}
+        <ClusterCreateDialog
+          trigger={
+            <button className="text-xs px-2.5 py-1 rounded-lg border border-dashed border-primary/40 text-primary hover:bg-primary/5 transition-colors">
+              + 클러스터 만들기
+            </button>
+          }
+          onCreated={() => {
+            // Reload cluster data
+            setClusterLoaded(false);
+          }}
+        />
+        {selectedClusterId && zoomLevel === "cluster" && (
+          <button
+            onClick={() => setShowMembersFor(showMembersFor === selectedClusterId ? null : selectedClusterId)}
+            className={`text-xs px-2 py-1 rounded border transition-colors ${
+              showMembersFor === selectedClusterId ? "bg-primary/10 border-primary" : "hover:bg-muted"
+            }`}
+          >
+            👥 멤버
+          </button>
+        )}
+
         <div className="flex-1" />
 
         {/* Legend */}
@@ -1156,12 +1182,31 @@ export function NavigableKnowledgeMap({
                 </div>
               )}
 
-              <button
-                onClick={() => zoomIntoCluster(sel.id)}
-                className="w-full text-xs py-1.5 rounded-lg bg-primary text-primary-foreground hover:opacity-90 transition-opacity font-medium"
-              >
-                이 주제로 줌인
-              </button>
+              {/* Members panel */}
+              {showMembersFor === sel.id && (
+                <div className="border-t pt-2">
+                  <ClusterMembersPanel
+                    clusterId={sel.id}
+                    isAdmin={false}
+                    onClose={() => setShowMembersFor(null)}
+                  />
+                </div>
+              )}
+
+              <div className="flex gap-2">
+                <button
+                  onClick={() => zoomIntoCluster(sel.id)}
+                  className="flex-1 text-xs py-1.5 rounded-lg bg-primary text-primary-foreground hover:opacity-90 transition-opacity font-medium"
+                >
+                  이 주제로 줌인
+                </button>
+                <button
+                  onClick={() => setShowMembersFor(showMembersFor === sel.id ? null : sel.id)}
+                  className="text-xs py-1.5 px-3 rounded-lg border hover:bg-muted transition-colors"
+                >
+                  👥
+                </button>
+              </div>
             </div>
           );
         })()}
