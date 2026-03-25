@@ -45,7 +45,7 @@ export async function POST(req: NextRequest) {
   }
 
   // Generic relation creation
-  const { sourceQASetId, targetQASetId, sourceOpinionId, targetOpinionId, relationType } = body;
+  const { sourceQASetId, targetQASetId, sourceOpinionId, targetOpinionId, targetMessageId, relationType } = body;
 
   const relation = await prisma.nodeRelation.create({
     data: {
@@ -53,6 +53,7 @@ export async function POST(req: NextRequest) {
       targetQASetId: targetQASetId || null,
       sourceOpinionId: sourceOpinionId || null,
       targetOpinionId: targetOpinionId || null,
+      targetMessageId: targetMessageId || null,
       relationType: relationType || "deepening",
       isAIGenerated: false,
     },

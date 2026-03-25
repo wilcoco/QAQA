@@ -215,6 +215,9 @@ model Message {
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 
+  // 이 Message에 달린 의견들
+  opinions        NodeRelation[] @relation("MessageOpinionTarget")
+
   @@index([qaSetId, orderIndex])
 }
 
@@ -280,7 +283,9 @@ model RewardEvent {
 // User opinion node (non-AI, user-created content node)
 model OpinionNode {
   id          String   @id @default(cuid())
-  content     String
+  content     String                    // 평문 (하위호환)
+  contentHtml String?                   // 리치 에디터 HTML (선택적)
+  contentJson String?                   // Tiptap JSON (에디터 복원용)
   userId      String
   user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
@@ -304,11 +309,13 @@ model NodeRelation {
   sourceOpinionId     String?
   sourceOpinion       OpinionNode? @relation("OpinionRelationSource", fields: [sourceOpinionId], references: [id], onDelete: Cascade)
 
-  // Target node (either QASet or OpinionNode)
+  // Target node (either QASet or OpinionNode or Message)
   targetQASetId       String?
   targetQASet         QASet?       @relation("RelationTarget", fields: [targetQASetId], references: [id], onDelete: Cascade)
   targetOpinionId     String?
   targetOpinion       OpinionNode? @relation("OpinionRelationTarget", fields: [targetOpinionId], references: [id], onDelete: Cascade)
+  targetMessageId     String?
+  targetMessage       Message?     @relation("MessageOpinionTarget", fields: [targetMessageId], references: [id], onDelete: Cascade)
 
   // Relationship type
   relationType    String   // "generalization" | "specialization" | "counterargument" | "evidence" | "elaboration" | "analogy" | "cause_effect" | "prerequisite" | "custom"
@@ -322,6 +329,7 @@ model NodeRelation {
   @@index([targetQASetId])
   @@index([sourceOpinionId])
   @@index([targetOpinionId])
+  @@index([targetMessageId])
 }
 
 // ─────────────────────────────────────────────

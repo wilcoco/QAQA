@@ -92,6 +92,8 @@ export interface MessageData {
   relationQ1Q2: string | null;    // 전문가: 질문 전개 유형
   relationA1Q2: string | null;    // 전문가: 대답 트리거 유형
   relationStance: string | null;  // 입장: 수용|중립|도전
+  // 이 메시지에 달린 의견들
+  opinions?: MessageOpinion[];
 }
 
 export interface ScoreDetail {
@@ -144,8 +146,27 @@ export interface GraphEdge {
 export interface OpinionNodeData {
   id: string;
   content: string;
+  contentHtml?: string | null;
+  contentJson?: string | null;
   userId: string;
   user?: {
+    name: string | null;
+    image: string | null;
+  };
+  createdAt: Date;
+  // 연결 정보
+  relationType?: string;
+  targetMessageId?: string | null;
+  targetQASetId?: string | null;
+}
+
+export interface MessageOpinion {
+  id: string;
+  content: string;
+  contentHtml?: string | null;
+  relationType: string;
+  user: {
+    id: string;
     name: string | null;
     image: string | null;
   };

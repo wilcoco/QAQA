@@ -387,6 +387,7 @@ export function Section2Workspace({
                 isOwner={isOwner}
                 qaSetId={qaSet.id}
                 creatorName={qaSet.creator?.name}
+                isShared={qaSet.isShared}
                 onMessageImproved={async () => {
                   const res = await fetch(`/api/qa-sets/${qaSet.id}`);
                   if (res.ok) onQASetUpdated(await res.json());
