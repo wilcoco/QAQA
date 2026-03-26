@@ -101,6 +101,37 @@ export async function GET(
     qaSet: qaSetMap.get(r.qaSetId) ?? { id: r.qaSetId, title: null },
   }));
 
+  // 내가 작성한 답변 (isHumanAuthored = true)
+  const myAnswers = await prisma.message.findMany({
+    where: {
+      authorUserId: userId,
+      isHumanAuthored: true,
+    },
+    orderBy: { createdAt: "desc" },
+    take: 10,
+    select: {
+      id: true,
+      content: true,
+      createdAt: true,
+      qaSet: {
+        select: {
+          id: true,
+          title: true,
+          viewCount: true,
+          totalInvested: true,
+          investorCount: true,
+          isAIGenerated: true,
+        },
+      },
+    },
+  });
+
+  // 내 답변으로 도움받은 총 인원 (viewCount 합계)
+  const totalHelpedCount = myAnswers.reduce(
+    (sum, a) => sum + (a.qaSet.viewCount ?? 0),
+    0
+  );
+
   return NextResponse.json({
     user,
     stats: {
@@ -109,9 +140,12 @@ export async function GET(
       totalInvestments: user._count.investments,
       totalAmountInvested: totalInvested._sum.amount ?? 0,
       totalRewardsReceived: totalRewards._sum.amount ?? 0,
+      totalAnswers: myAnswers.length,
+      totalHelpedCount,
     },
     recentQASets,
     recentInvestments,
     rewardHistory: rewardHistoryWithQaSet,
+    myAnswers,
   });
 }

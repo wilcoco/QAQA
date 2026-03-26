@@ -23,7 +23,22 @@ interface ProfileData {
     totalInvestments: number;
     totalAmountInvested: number;
     totalRewardsReceived: number;
+    totalAnswers?: number;
+    totalHelpedCount?: number;
   };
+  myAnswers?: Array<{
+    id: string;
+    content: string;
+    createdAt: string;
+    qaSet: {
+      id: string;
+      title: string | null;
+      viewCount: number;
+      totalInvested: number;
+      investorCount: number;
+      isAIGenerated: boolean;
+    };
+  }>;
   recentQASets: Array<{
     id: string;
     title: string | null;
@@ -303,6 +318,81 @@ export function MyDashboard({ onSelectQASet, onGoToSearch, onGoToAnswer }: MyDas
               <Button variant="outline" size="sm" onClick={onGoToSearch}>
                 인기 Q&A 둘러보기
               </Button>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
+      {/* My Answers (AI 질문에 답변한 것) */}
+      {profile.myAnswers && profile.myAnswers.length > 0 && (
+        <div className="space-y-3">
+          <div className="flex items-center justify-between">
+            <h2 className="text-lg font-semibold">✍️ 내 답변</h2>
+            {stats.totalHelpedCount && stats.totalHelpedCount > 0 && (
+              <Badge variant="secondary" className="text-xs">
+                {stats.totalHelpedCount}명에게 도움됨
+              </Badge>
+            )}
+          </div>
+          <div className="grid gap-3">
+            {profile.myAnswers.map((answer) => (
+              <Card
+                key={answer.id}
+                className="cursor-pointer hover:bg-accent/50 transition-colors"
+                onClick={() => onSelectQASet(answer.qaSet.id)}
+              >
+                <CardContent className="py-4">
+                  <div className="flex items-start gap-3">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className="font-medium truncate">{answer.qaSet.title || "제목 없음"}</span>
+                        {answer.qaSet.isAIGenerated && (
+                          <Badge variant="outline" className="shrink-0 text-xs border-purple-300 text-purple-600">
+                            🤖 AI 질문
+                          </Badge>
+                        )}
+                      </div>
+                      <p className="text-sm text-muted-foreground line-clamp-2">
+                        {answer.content.slice(0, 100)}...
+                      </p>
+                      <div className="flex items-center gap-3 mt-2 text-xs text-muted-foreground">
+                        {answer.qaSet.viewCount > 0 && (
+                          <span className="text-green-600 font-medium">
+                            👀 {answer.qaSet.viewCount}명이 봄
+                          </span>
+                        )}
+                        {answer.qaSet.investorCount > 0 && (
+                          <span>📊 {answer.qaSet.investorCount}명 경작</span>
+                        )}
+                        <span>{new Date(answer.createdAt).toLocaleDateString("ko-KR")}</span>
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Empty answers CTA */}
+      {(!profile.myAnswers || profile.myAnswers.length === 0) && stats.totalQASets > 0 && (
+        <div className="space-y-3">
+          <h2 className="text-lg font-semibold">✍️ 내 답변</h2>
+          <Card className="border-dashed border-purple-200 dark:border-purple-800">
+            <CardContent className="py-8 text-center space-y-2">
+              <div className="text-3xl">🤖→👤</div>
+              <p className="text-sm text-muted-foreground">
+                AI가 묻는 질문에 답변하면 여기에 표시됩니다.
+              </p>
+              <p className="text-xs text-muted-foreground">
+                내 경험이 다른 사람의 AI 답변에 인용됩니다.
+              </p>
+              {onGoToAnswer && (
+                <Button variant="outline" size="sm" onClick={onGoToAnswer} className="border-purple-300">
+                  AI 질문에 답하기
+                </Button>
+              )}
             </CardContent>
           </Card>
         </div>

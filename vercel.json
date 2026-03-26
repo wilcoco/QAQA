@@ -3,6 +3,10 @@
     {
       "path": "/api/cron/decay",
       "schedule": "0 3 * * 1"
+    },
+    {
+      "path": "/api/cron/generate-trend-questions",
+      "schedule": "0 0 * * *"
     }
   ]
 }
