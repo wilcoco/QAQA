@@ -28,6 +28,7 @@ const SIMPLE_BADGE_CONFIG: Record<string, { label: string; color: string; bg: st
   반박:   { label: "반박",   color: "text-red-700",    bg: "bg-red-100 border-red-300" },
   적용:   { label: "적용",   color: "text-teal-700",   bg: "bg-teal-100 border-teal-300" },
   정리:   { label: "정리",   color: "text-gray-700",   bg: "bg-gray-100 border-gray-300" },
+  AI오류: { label: "🤖❌ AI오류", color: "text-pink-700", bg: "bg-pink-100 border-pink-300" },
 };
 
 const STANCE_CONFIG: Record<string, { label: string; color: string }> = {

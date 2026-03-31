@@ -122,7 +122,10 @@ export default function HomePage() {
               🌍 집단지성
             </h1>
             <p className="text-xl text-foreground font-medium">
-              혼자 쓰고 버리던 AI 답변,<br className="sm:hidden" /> 여기선 모두의 지식이 됩니다
+              당신의 경험과 관점이<br className="sm:hidden" /> 모두의 지식이 됩니다
+            </p>
+            <p className="text-sm text-muted-foreground">
+              AI 답변에 의견을 더하고, 좋은 지식을 발굴하고, 함께 지식을 쌓아가세요
             </p>
           </div>
 
@@ -132,7 +135,7 @@ export default function HomePage() {
               href="/login"
               className="p-4 rounded-xl border-2 border-blue-200 dark:border-blue-800 bg-gradient-to-br from-blue-50 to-blue-100/50 dark:from-blue-950/30 dark:to-blue-900/20 text-center space-y-2 hover:shadow-lg hover:scale-105 transition-all"
             >
-              <div className="text-2xl">📝</div>
+              <div className="text-2xl">💬</div>
               <h3 className="font-semibold text-sm">질문하기</h3>
               <p className="text-[10px] text-muted-foreground leading-snug">AI에게<br />질문하세요</p>
             </Link>
@@ -140,17 +143,17 @@ export default function HomePage() {
               href="/login"
               className="p-4 rounded-xl border-2 border-green-200 dark:border-green-800 bg-gradient-to-br from-green-50 to-green-100/50 dark:from-green-950/30 dark:to-green-900/20 text-center space-y-2 hover:shadow-lg hover:scale-105 transition-all"
             >
-              <div className="text-2xl">📈</div>
-              <h3 className="font-semibold text-sm">투자하기</h3>
-              <p className="text-[10px] text-muted-foreground leading-snug">좋은 Q&A에<br />투자하세요</p>
+              <div className="text-2xl">🧠</div>
+              <h3 className="font-semibold text-sm">의견 남기기</h3>
+              <p className="text-[10px] text-muted-foreground leading-snug">경험과 관점을<br />공유하세요</p>
             </Link>
             <Link
               href="/login"
-              className="p-4 rounded-xl border-2 border-purple-200 dark:border-purple-800 bg-gradient-to-br from-purple-50 to-purple-100/50 dark:from-purple-950/30 dark:to-purple-900/20 text-center space-y-2 hover:shadow-lg hover:scale-105 transition-all"
+              className="p-4 rounded-xl border-2 border-amber-200 dark:border-amber-800 bg-gradient-to-br from-amber-50 to-amber-100/50 dark:from-amber-950/30 dark:to-amber-900/20 text-center space-y-2 hover:shadow-lg hover:scale-105 transition-all"
             >
-              <div className="text-2xl">🤖→👤</div>
-              <h3 className="font-semibold text-sm">답변하기</h3>
-              <p className="text-[10px] text-muted-foreground leading-snug">AI의 질문에<br />답하세요</p>
+              <div className="text-2xl">📈</div>
+              <h3 className="font-semibold text-sm">투자하기</h3>
+              <p className="text-[10px] text-muted-foreground leading-snug">좋은 Q&A를<br />발굴하세요</p>
             </Link>
           </div>
 

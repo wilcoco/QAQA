@@ -211,21 +211,19 @@ export function MyDashboard({ onSelectQASet, onGoToSearch, onGoToAnswer }: MyDas
       {hasNoQASets && (
         <Card className="border-dashed">
           <CardContent className="py-10 text-center space-y-3">
-            <div className="text-4xl">💬</div>
-            <h3 className="font-medium text-lg">아직 활동이 없습니다</h3>
+            <div className="text-4xl">🧠</div>
+            <h3 className="font-medium text-lg">지식을 쌓아보세요</h3>
             <p className="text-sm text-muted-foreground max-w-sm mx-auto">
-              AI에게 질문하고, 좋은 대화는 공유하세요.<br />
-              다른 사람이 투자하면 보상이 돌아옵니다.
+              질문하고, 의견을 남기고, 좋은 Q&A를 발굴하세요.<br />
+              당신의 기여가 다른 사람에게 도움이 됩니다.
             </p>
-            <div className="flex gap-2 mt-2">
+            <div className="flex flex-wrap gap-2 justify-center mt-2">
               <Button onClick={onGoToSearch}>
-                질문하러 가기
+                질문하기
               </Button>
-              {onGoToAnswer && (
-                <Button variant="outline" onClick={onGoToAnswer}>
-                  🙋 AI 질문에 답하기
-                </Button>
-              )}
+              <Button variant="outline" onClick={onGoToSearch}>
+                📈 좋은 Q&A에 투자하기
+              </Button>
             </div>
           </CardContent>
         </Card>
@@ -323,13 +321,13 @@ export function MyDashboard({ onSelectQASet, onGoToSearch, onGoToAnswer }: MyDas
         </div>
       )}
 
-      {/* My Answers (AI 질문에 답변한 것) */}
+      {/* My Contributions (인간의 지적 기여) */}
       {profile.myAnswers && profile.myAnswers.length > 0 && (
         <div className="space-y-3">
           <div className="flex items-center justify-between">
-            <h2 className="text-lg font-semibold">✍️ 내 답변</h2>
+            <h2 className="text-lg font-semibold">🧠 내 기여</h2>
             {stats.totalHelpedCount && stats.totalHelpedCount > 0 && (
-              <Badge variant="secondary" className="text-xs">
+              <Badge variant="secondary" className="text-xs bg-green-100 text-green-700 dark:bg-green-950 dark:text-green-400">
                 {stats.totalHelpedCount}명에게 도움됨
               </Badge>
             )}
@@ -375,24 +373,22 @@ export function MyDashboard({ onSelectQASet, onGoToSearch, onGoToAnswer }: MyDas
         </div>
       )}
 
-      {/* Empty answers CTA */}
+      {/* Empty contributions CTA */}
       {(!profile.myAnswers || profile.myAnswers.length === 0) && stats.totalQASets > 0 && (
         <div className="space-y-3">
-          <h2 className="text-lg font-semibold">✍️ 내 답변</h2>
-          <Card className="border-dashed border-purple-200 dark:border-purple-800">
+          <h2 className="text-lg font-semibold">🧠 내 기여</h2>
+          <Card className="border-dashed">
             <CardContent className="py-8 text-center space-y-2">
-              <div className="text-3xl">🤖→👤</div>
+              <div className="text-3xl">💬</div>
               <p className="text-sm text-muted-foreground">
-                AI가 묻는 질문에 답변하면 여기에 표시됩니다.
+                Q&A에 의견을 남기거나 보완하면 여기에 표시됩니다.
               </p>
               <p className="text-xs text-muted-foreground">
-                내 경험이 다른 사람의 AI 답변에 인용됩니다.
+                당신의 경험과 관점이 지식의 가치를 높입니다.
               </p>
-              {onGoToAnswer && (
-                <Button variant="outline" size="sm" onClick={onGoToAnswer} className="border-purple-300">
-                  AI 질문에 답하기
-                </Button>
-              )}
+              <Button variant="outline" size="sm" onClick={onGoToSearch}>
+                Q&A 둘러보기
+              </Button>
             </CardContent>
           </Card>
         </div>

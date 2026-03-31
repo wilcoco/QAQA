@@ -391,93 +391,6 @@ export function Section1QuestionInput({ onNewQuestion, onSelectSharedQA, onAnswe
                 </div>
               )}
 
-              {/* ── 🤖 AI가 묻고 있습니다 (AI-generated questions) ── */}
-              {aiGeneratedQs.length > 0 && (
-                <div className="mb-6">
-                  <div className="flex items-center gap-2 mb-3">
-                    <span className="text-base font-bold">🤖</span>
-                    <span className="text-sm font-semibold">AI가 묻고 있습니다</span>
-                    <span className="text-[10px] text-muted-foreground">답변하고 보상을 받으세요</span>
-                  </div>
-                  <div className="space-y-2">
-                    {aiGeneratedQs.map((q) => (
-                      <button
-                        key={q.id}
-                        onClick={() => onSelectSharedQA(q.id)}
-                        className="w-full text-left p-3.5 rounded-xl border-2 border-amber-300 dark:border-amber-700 bg-amber-50/50 dark:bg-amber-950/20 hover:border-amber-400 hover:bg-amber-50 dark:hover:bg-amber-950/30 transition-all group"
-                      >
-                        <div className="flex items-start gap-3">
-                          <span className="text-lg shrink-0 mt-0.5">
-                            {q.aiQuestionType === "community" ? "💬" : "🔬"}
-                          </span>
-                          <div className="flex-1 min-w-0">
-                            <p className="text-sm font-medium leading-snug">{q.title}</p>
-                            <div className="flex items-center gap-2 mt-1.5">
-                              {q.cluster && (
-                                <span className="text-[10px] text-muted-foreground">{q.cluster.name}</span>
-                              )}
-                              <span className="text-[10px] px-1.5 py-0.5 rounded-full font-medium bg-amber-100 text-amber-700 dark:bg-amber-950 dark:text-amber-400">
-                                {q.aiQuestionType === "community"
-                                  ? `${q.answerCount}명 답변 중 · 첫 답변자 보상 ${q.rewardMultiplier}배`
-                                  : "AI 답변 있음 · 검증 필요"
-                                }
-                              </span>
-                            </div>
-                          </div>
-                          <span className="text-xs text-amber-600 dark:text-amber-400 font-medium shrink-0 self-center opacity-0 group-hover:opacity-100 transition-opacity">
-                            답변하기 →
-                          </span>
-                        </div>
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* ── 🤖→👤 전문가를 찾고 있는 질문 (Julie Zhuo: 서비스의 UNIQUE 섹션) ── */}
-              {aiQuestions.length > 0 && (
-                <div className="mb-6">
-                  <div className="flex items-center gap-2 mb-3">
-                    <span className="text-base font-bold">🤖→👤</span>
-                    <span className="text-sm font-semibold">전문가를 찾고 있는 질문</span>
-                    <span className="text-[10px] text-muted-foreground">경험이 있다면 기여해주세요</span>
-                  </div>
-                  <div className="space-y-2">
-                    {aiQuestions.map((gap) => (
-                      <button
-                        key={gap.id}
-                        onClick={() => onAnswerGap ? onAnswerGap(gap.id, gap.description) : setQuestion(gap.description)}
-                        className="w-full text-left p-3.5 rounded-xl border-2 border-dashed border-primary/30 bg-primary/5 hover:border-primary/60 hover:bg-primary/10 transition-all group"
-                      >
-                        <div className="flex items-start gap-3">
-                          <span className="text-lg shrink-0 mt-0.5">
-                            {gap.gapType === "uncertain_answer" ? "❓" : gap.gapType === "inconsistency" ? "⚡" : gap.gapType === "conflicting_claims" ? "⚔️" : "📎"}
-                          </span>
-                          <div className="flex-1 min-w-0">
-                            <p className="text-sm font-medium leading-snug">{gap.description}</p>
-                            <div className="flex items-center gap-2 mt-1.5">
-                              <span className="text-[10px] text-muted-foreground">{gap.topicCluster.name}</span>
-                              <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-medium ${
-                                gap.severity === "high"
-                                  ? "bg-red-100 text-red-600 dark:bg-red-950 dark:text-red-400"
-                                  : gap.severity === "medium"
-                                  ? "bg-yellow-100 text-yellow-600 dark:bg-yellow-950 dark:text-yellow-400"
-                                  : "bg-green-100 text-green-600 dark:bg-green-950 dark:text-green-400"
-                              }`}>
-                                {gap.severity === "high" ? "긴급" : gap.severity === "medium" ? "보통" : "낮음"}
-                              </span>
-                            </div>
-                          </div>
-                          <span className="text-xs text-primary font-medium shrink-0 self-center opacity-0 group-hover:opacity-100 transition-opacity">
-                            답하기 →
-                          </span>
-                        </div>
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              )}
-
               {/* ── 🌱 새로 공유된 Q&A (48시간 이내 — Seedling Area) ── */}
               {seedlingQAs.length > 0 && (
                 <div className="mb-6">
@@ -584,6 +497,50 @@ export function Section1QuestionInput({ onNewQuestion, onSelectSharedQA, onAnswe
                         className="text-xs px-3 py-1.5 rounded-full border border-border text-muted-foreground hover:border-primary/50 hover:text-foreground hover:bg-muted/50 transition-colors"
                       >
                         {example}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* ── 💡 추천 주제 (구 AI가 묻고 있습니다 — 축소된 형태) ── */}
+              {aiGeneratedQs.length > 0 && (
+                <div className="mt-8 pt-6 border-t">
+                  <div className="flex items-center gap-2 mb-3">
+                    <span className="text-sm">💡</span>
+                    <span className="text-xs font-medium text-muted-foreground">추천 주제</span>
+                    <span className="text-[10px] text-muted-foreground/60">트렌드 기반</span>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    {aiGeneratedQs.slice(0, 5).map((q) => (
+                      <button
+                        key={q.id}
+                        onClick={() => onSelectSharedQA(q.id)}
+                        className="text-xs px-3 py-1.5 rounded-full border border-muted-foreground/20 text-muted-foreground hover:border-primary/50 hover:text-foreground hover:bg-muted/50 transition-colors"
+                      >
+                        {q.title?.slice(0, 30)}{q.title && q.title.length > 30 ? "..." : ""}
+                        {q.answerCount > 0 && <span className="ml-1 text-[10px]">({q.answerCount}명)</span>}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* ── 🤖→👤 지식 갭 (축소된 형태) ── */}
+              {aiQuestions.length > 0 && (
+                <div className="mt-6">
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className="text-xs">🤖→👤</span>
+                    <span className="text-[10px] text-muted-foreground">AI가 확신하지 못하는 질문</span>
+                  </div>
+                  <div className="flex flex-wrap gap-1.5">
+                    {aiQuestions.slice(0, 3).map((gap) => (
+                      <button
+                        key={gap.id}
+                        onClick={() => onAnswerGap ? onAnswerGap(gap.id, gap.description) : setQuestion(gap.description)}
+                        className="text-[11px] px-2.5 py-1 rounded-md border border-dashed border-muted-foreground/30 text-muted-foreground hover:border-primary/50 hover:text-foreground hover:bg-primary/5 transition-colors"
+                      >
+                        {gap.description.slice(0, 40)}{gap.description.length > 40 ? "..." : ""}
                       </button>
                     ))}
                   </div>

@@ -18,8 +18,8 @@ const RELATION_TOOL: Anthropic.Tool = {
     properties: {
       simple: {
         type: "string",
-        enum: ["명확화", "더깊게", "근거", "검증", "반박", "적용", "정리"],
-        description: "명확화=clarifying, 더깊게=deeper, 근거=evidence, 검증=verify, 반박=counter, 적용=apply, 정리=summarize",
+        enum: ["명확화", "더깊게", "근거", "검증", "반박", "적용", "정리", "AI오류"],
+        description: "명확화=clarifying, 더깊게=deeper, 근거=evidence, 검증=verify, 반박=counter, 적용=apply, 정리=summarize, AI오류=AI error correction",
       },
       stance: {
         type: "string",
