@@ -38,6 +38,11 @@ export async function POST(
     return NextResponse.json({ error: "투자를 찾을 수 없습니다." }, { status: 404 });
   }
 
+  // QASet 발자국만 철회 가능 (OpinionNode 발자국은 추후 지원)
+  if (!investment.qaSetId) {
+    return NextResponse.json({ error: "현재 QASet 발자국만 철회 가능합니다." }, { status: 400 });
+  }
+
   // 본인 투자만 철회 가능
   if (investment.userId !== session.user.id) {
     return NextResponse.json({ error: "본인의 투자만 철회할 수 있습니다." }, { status: 403 });
@@ -77,7 +82,7 @@ export async function POST(
     }),
     // 3. Q&A 세트 통계 업데이트 (플러스/마이너스 투자 구분)
     prisma.qASet.update({
-      where: { id: investment.qaSetId },
+      where: { id: investment.qaSetId! },
       data: investment.isNegative
         ? {
             negativeInvested: { decrement: investment.amount },
@@ -95,7 +100,7 @@ export async function POST(
     data: {
       recipientId: session.user.id,
       amount: refundAmount,
-      qaSetId: investment.qaSetId,
+      qaSetId: investment.qaSetId!,
       sourceInvestmentId: id,
       rewardType: "uninvest_refund",
     },

@@ -216,7 +216,8 @@ model Message {
   updatedAt       DateTime @updatedAt
 
   // 이 Message에 달린 의견들
-  opinions        NodeRelation[] @relation("MessageOpinionTarget")
+  opinionNodes    OpinionNode[]
+  nodeRelations   NodeRelation[] @relation("MessageOpinionTarget")
 
   @@index([qaSetId, orderIndex])
 }
@@ -227,8 +228,12 @@ model Message {
 
 model Investment {
   id          String   @id @default(cuid())
-  qaSetId     String
-  qaSet       QASet    @relation(fields: [qaSetId], references: [id], onDelete: Cascade)
+
+  // 발자국 대상 (QASet 또는 OpinionNode 중 하나)
+  qaSetId       String?
+  qaSet         QASet?       @relation(fields: [qaSetId], references: [id], onDelete: Cascade)
+  opinionNodeId String?
+  opinionNode   OpinionNode? @relation(fields: [opinionNodeId], references: [id], onDelete: Cascade)
 
   userId      String
   user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -236,23 +241,25 @@ model Investment {
   amount      Int
   position    Int      // chronological position (1-indexed)
   isActive    Boolean  @default(true)
-  isNegative  Boolean  @default(false)  // true = 사냥 (오류 발견)
-  comment     String?  // 경작자/사냥꾼 한줄 코멘트
+  isNegative  Boolean  @default(false)  // true = 반대 발자국 (🔻)
+  comment     String?  // 한줄 코멘트
 
-  // HITS-weighted
-  effectiveAmount  Float  @default(0)   // sqrt(amount) × hub at investment time
-  cumulativeReward Int    @default(0)   // 누적 보상 (상한 추적용)
+  // HITS-weighted (기존 호환)
+  effectiveAmount  Float  @default(0)
+  cumulativeReward Int    @default(0)
 
-  huntingReason           String?   // 사냥 사유: hallucination, outdated_info, incorrect_fact, missing_nuance, source_mismatch, logical_fallacy, overgeneralization
-  huntingEvidence          String?   // 사냥 근거 (최대 500자)
-  huntingTargetMessageId   String?   // 문제가 있는 특정 메시지 ID
+  // 반대 발자국 상세 (AI 오류 등)
+  huntingReason           String?   // hallucination, outdated, inaccurate, incomplete, bias
+  huntingEvidence         String?   // 근거 (최대 500자)
+  huntingTargetMessageId  String?   // 특정 메시지 타겟
 
   createdAt   DateTime @default(now())
 
-  // Rewards generated from this investment (to prior investors)
+  // Rewards generated from this investment
   rewardEvents RewardEvent[]
 
   @@index([qaSetId, position])
+  @@index([opinionNodeId])
   @@index([userId])
 }
 
@@ -283,20 +290,37 @@ model RewardEvent {
 // User opinion node (non-AI, user-created content node)
 model OpinionNode {
   id          String   @id @default(cuid())
+
+  // 어떤 답변에 대한 의견인지
+  messageId   String?
+  message     Message? @relation(fields: [messageId], references: [id], onDelete: Cascade)
+
+  // 의견 유형
+  type        String   @default("opinion")  // "opinion" | "ai_error" | "support" | "counter"
+
+  // AI 오류인 경우 오류 유형
+  errorType   String?  // "hallucination" | "outdated" | "inaccurate" | "incomplete" | "bias"
+
+  // 내용
   content     String                    // 평문 (하위호환)
   contentHtml String?                   // 리치 에디터 HTML (선택적)
   contentJson String?                   // Tiptap JSON (에디터 복원용)
+
   userId      String
   user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
+  // 이 의견에 대한 발자국
+  investments Investment[]
+
   // Graph relations
   relationsAsSource  NodeRelation[] @relation("OpinionRelationSource")
   relationsAsTarget  NodeRelation[] @relation("OpinionRelationTarget")
 
   @@index([userId])
+  @@index([messageId])
 }
 
 // Relationship between any two nodes (QASet or OpinionNode)

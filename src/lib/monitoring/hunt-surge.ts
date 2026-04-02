@@ -44,7 +44,7 @@ export async function detectHuntSurges(
   if (surges.length === 0) return [];
 
   // Fetch details
-  const qaSetIds = surges.map((s) => s.qaSetId);
+  const qaSetIds = surges.map((s) => s.qaSetId).filter((id): id is string => id !== null);
   const [qaSets, investments] = await Promise.all([
     prisma.qASet.findMany({
       where: { id: { in: qaSetIds } },
@@ -63,16 +63,19 @@ export async function detectHuntSurges(
   const titleMap = new Map(qaSets.map((q) => [q.id, q.title]));
   const hunterMap = new Map<string, Set<string>>();
   for (const inv of investments) {
+    if (!inv.qaSetId) continue;
     if (!hunterMap.has(inv.qaSetId)) hunterMap.set(inv.qaSetId, new Set());
     hunterMap.get(inv.qaSetId)!.add(inv.userId);
   }
 
-  return surges.map((s) => ({
-    qaSetId: s.qaSetId,
-    qaSetTitle: titleMap.get(s.qaSetId) ?? null,
-    huntCount: s._count,
-    totalHuntAmount: s._sum.amount ?? 0,
-    windowHours,
-    hunterIds: [...(hunterMap.get(s.qaSetId) ?? [])],
-  }));
+  return surges
+    .filter((s) => s.qaSetId !== null)
+    .map((s) => ({
+      qaSetId: s.qaSetId!,
+      qaSetTitle: titleMap.get(s.qaSetId!) ?? null,
+      huntCount: s._count,
+      totalHuntAmount: s._sum.amount ?? 0,
+      windowHours,
+      hunterIds: [...(hunterMap.get(s.qaSetId!) ?? [])],
+    }));
 }
