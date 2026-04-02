@@ -24,8 +24,8 @@ export function Header() {
       <div className="flex h-14 items-center px-4 gap-4">
         {/* Logo */}
         <Link href="/" className="flex items-center gap-2 font-bold text-lg">
-          <span className="text-2xl">🧠</span>
-          <span className="hidden sm:inline">업무 지식</span>
+          <span className="text-2xl">👣</span>
+          <span className="hidden sm:inline">Dapsol</span>
         </Link>
 
         <div className="flex-1" />
@@ -61,9 +61,9 @@ export function Header() {
               </Badge>
             )}
 
-            {/* Balance display */}
-            <Badge variant="secondary" className="font-mono text-sm">
-              💎 {session.user.balance ?? "..."}
+            {/* 발자국 표시 */}
+            <Badge variant="secondary" className="font-mono text-sm" title="보유 발자국">
+              👣 {session.user.balance ?? "..."}
             </Badge>
 
             {/* User dropdown */}
@@ -94,7 +94,7 @@ export function Header() {
                           <AuthorityIcon size={12} /> {session.user.authorityScore!.toFixed(2)}
                         </span>
                       )}
-                      <span>💎 {session.user.balance ?? 0}</span>
+                      <span>👣 {session.user.balance ?? 0}</span>
                     </p>
                   </div>
                 </div>

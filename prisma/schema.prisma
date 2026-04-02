@@ -3,9 +3,8 @@ generator client {
 }
 
 datasource db {
-  provider  = "postgresql"
+  provider  = "sqlite"
   url       = env("DATABASE_URL")
-  directUrl = env("DIRECT_DATABASE_URL")
 }
 
 // ─────────────────────────────────────────────
@@ -19,13 +18,13 @@ model User {
   emailVerified DateTime?
   image         String?
 
-  // Trust point system
-  balance       Int       @default(10000)
+  // 발자국 시스템 (Dapsol)
+  balance       Int       @default(30)    // 발자국 수 (가입 시 30 지급)
   trustLevel    Int       @default(1)
 
-  // HITS scores (쌍방향: 투자자=허브, 창작자=권위)
-  hubScore        Float   @default(1.0)   // 경작 안목 점수 — 좋은 Q&A를 먼저 발굴한 투자자 지수
-  authorityScore  Float   @default(100.0) // 창작 권위 점수 — 100 + (외부투자총액 / 공유QA수)
+  // 신뢰도 점수 (기존 호환)
+  hubScore        Float   @default(1.0)   // 투자 안목 점수
+  authorityScore  Float   @default(100.0) // 기여 권위 점수
 
   // Onboarding
   onboardingCompleted Boolean @default(false)

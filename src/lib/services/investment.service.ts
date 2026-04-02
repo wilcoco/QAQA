@@ -541,7 +541,9 @@ async function distributeNegativeRewardsToInvestors(
 async function handlePositiveMilestone(
   qaSetId: string, newPosition: number, investmentId: string,
 ): Promise<InvestmentResult["poolRelease"]> {
-  if (!QUALITY_POOL_MILESTONES.includes(newPosition as 3 | 10 | 25)) return null;
+  // 발자국 시스템: 품질 풀 마일스톤 비활성화 (100% 즉시 분배)
+  // @ts-expect-error - QUALITY_POOL_MILESTONES is empty array (milestones disabled)
+  if (QUALITY_POOL_MILESTONES.length === 0 || !QUALITY_POOL_MILESTONES.includes(newPosition)) return null;
 
   const updatedQASet = await prisma.qASet.findUnique({
     where: { id: qaSetId },

@@ -1,5 +1,6 @@
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { grantPioneerReward } from "@/lib/engine/footprint-rewards";
 import { NextRequest, NextResponse } from "next/server";
 
 /**
@@ -53,6 +54,9 @@ export async function POST(req: NextRequest) {
       },
     },
   });
+
+  // 개척자 보상 (+10 발자국)
+  grantPioneerReward(session.user.id, qaSet.id).catch(console.error);
 
   return NextResponse.json(qaSet);
 }

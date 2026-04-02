@@ -4,6 +4,7 @@ import { detectInsight } from "@/lib/knowledge/insight-detector";
 import { findRelevantGaps } from "@/lib/knowledge/gap-context";
 import { retrieveRelevantKnowledge, formatRAGContext } from "@/lib/chat/rag-context";
 import { retrieveHumanKnowledge, formatHumanKnowledgeContext } from "@/lib/chat/human-knowledge-retrieval";
+import { grantAIAnswerReward } from "@/lib/engine/footprint-rewards";
 import Anthropic from "@anthropic-ai/sdk";
 import { NextRequest } from "next/server";
 import { trackLLMCall } from "@/lib/monitoring/llm-tracker";
@@ -235,7 +236,7 @@ INSTRUCTIONS FOR KNOWLEDGE GAPS:
             const hasGapQuestion = fullContent.includes("[[GAP_QUESTION]]");
             const cleanContent = fullContent.replace(/\[\[GAP_QUESTION\]\]/g, "").trim();
 
-            // Save assistant message
+            // Save assistant message and grant AI answer reward
             if (cleanContent) {
               const messageCount = await prisma.message.count({ where: { qaSetId } });
               await prisma.message.create({
@@ -247,6 +248,9 @@ INSTRUCTIONS FOR KNOWLEDGE GAPS:
                   gapQuestionId: hasGapQuestion && activeGapId ? activeGapId : undefined,
                 },
               });
+
+              // AI 답변 생성 보상 (+5 발자국)
+              grantAIAnswerReward(session.user.id, qaSetId).catch(console.error);
             }
 
             // Save relation labels from tool_use

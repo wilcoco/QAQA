@@ -105,7 +105,7 @@ export default function HomePage() {
   if (status === "loading" && !session) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-pulse text-4xl">🌍</div>
+        <div className="animate-pulse text-4xl">👣</div>
       </div>
     );
   }
@@ -119,46 +119,46 @@ export default function HomePage() {
           {/* Hero */}
           <div className="text-center space-y-4 max-w-2xl pt-12 pb-6">
             <h1 className="text-4xl font-bold tracking-tight">
-              🌍 집단지성
+              👣 Dapsol
             </h1>
             <p className="text-xl text-foreground font-medium">
-              당신의 경험과 관점이<br className="sm:hidden" /> 모두의 지식이 됩니다
+              사람이 검증한 AI 답변을<br className="sm:hidden" /> 무료로 검색하세요
             </p>
             <p className="text-sm text-muted-foreground">
-              AI 답변에 의견을 더하고, 좋은 지식을 발굴하고, 함께 지식을 쌓아가세요
+              먼저 간 발자국을 따라가세요. 당신의 발자국이 뒤에 오는 사람의 길이 됩니다.
             </p>
           </div>
 
-          {/* 3 Equal Action Cards (Julie Zhuo principle) */}
+          {/* 3 Equal Action Cards */}
           <div className="grid grid-cols-3 gap-3 max-w-lg w-full mb-8">
             <Link
               href="/login"
               className="p-4 rounded-xl border-2 border-blue-200 dark:border-blue-800 bg-gradient-to-br from-blue-50 to-blue-100/50 dark:from-blue-950/30 dark:to-blue-900/20 text-center space-y-2 hover:shadow-lg hover:scale-105 transition-all"
             >
-              <div className="text-2xl">💬</div>
-              <h3 className="font-semibold text-sm">질문하기</h3>
-              <p className="text-[10px] text-muted-foreground leading-snug">AI에게<br />질문하세요</p>
+              <div className="text-2xl">🔍</div>
+              <h3 className="font-semibold text-sm">길 찾기</h3>
+              <p className="text-[10px] text-muted-foreground leading-snug">검증된 답변<br />검색하세요</p>
             </Link>
             <Link
               href="/login"
               className="p-4 rounded-xl border-2 border-green-200 dark:border-green-800 bg-gradient-to-br from-green-50 to-green-100/50 dark:from-green-950/30 dark:to-green-900/20 text-center space-y-2 hover:shadow-lg hover:scale-105 transition-all"
             >
-              <div className="text-2xl">🧠</div>
-              <h3 className="font-semibold text-sm">의견 남기기</h3>
-              <p className="text-[10px] text-muted-foreground leading-snug">경험과 관점을<br />공유하세요</p>
+              <div className="text-2xl">👣</div>
+              <h3 className="font-semibold text-sm">발자국 남기기</h3>
+              <p className="text-[10px] text-muted-foreground leading-snug">경험과 의견을<br />공유하세요</p>
             </Link>
             <Link
               href="/login"
               className="p-4 rounded-xl border-2 border-amber-200 dark:border-amber-800 bg-gradient-to-br from-amber-50 to-amber-100/50 dark:from-amber-950/30 dark:to-amber-900/20 text-center space-y-2 hover:shadow-lg hover:scale-105 transition-all"
             >
-              <div className="text-2xl">📈</div>
-              <h3 className="font-semibold text-sm">투자하기</h3>
-              <p className="text-[10px] text-muted-foreground leading-snug">좋은 Q&A를<br />발굴하세요</p>
+              <div className="text-2xl">🏔️</div>
+              <h3 className="font-semibold text-sm">개척하기</h3>
+              <p className="text-[10px] text-muted-foreground leading-snug">새로운 길을<br />만드세요</p>
             </Link>
           </div>
 
           <Button size="lg" asChild className="mb-8">
-            <Link href="/login">탐험 시작하기</Link>
+            <Link href="/login">눈길을 걸어보세요</Link>
           </Button>
 
           {/* Live feed preview (visible without login) */}
@@ -172,7 +172,7 @@ export default function HomePage() {
   }
 
   const tabs: { key: ActiveTab; label: string; icon: string }[] = [
-    { key: "home", label: "홈", icon: "🏠" },
+    { key: "home", label: "길", icon: "👣" },
     { key: "map", label: "지도", icon: "🗺️" },
     { key: "profile", label: "나", icon: "👤" },
   ];
@@ -350,8 +350,8 @@ function LandingTrending() {
   return (
     <div className="mb-6">
       <div className="flex items-center gap-2 mb-3">
-        <span className="text-sm font-semibold">🔥 지금 인기 Q&A</span>
-        <span className="text-xs text-muted-foreground">읽기만 가능 · 투자는 로그인 후</span>
+        <span className="text-sm font-semibold">🔥 인기 있는 길</span>
+        <span className="text-xs text-muted-foreground">무료로 열람 · 발자국은 로그인 후</span>
       </div>
       <div className="divide-y divide-border/50">
         {qas.map((qa: any) => (
@@ -359,8 +359,8 @@ function LandingTrending() {
             <p className="text-sm font-medium">{qa.title ?? "제목 없음"}</p>
             <div className="flex items-center gap-3 mt-1 text-[10px] text-muted-foreground">
               <span>{qa.creator?.name ?? "익명"}</span>
-              <span>📈 {qa.totalInvested ?? 0}</span>
-              <span>{qa.investorCount ?? 0}명 투자 중</span>
+              <span>👣 {qa.totalInvested ?? 0}</span>
+              <span>{qa.investorCount ?? 0}명이 걸어감</span>
             </div>
           </div>
         ))}

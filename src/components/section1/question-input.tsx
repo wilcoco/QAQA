@@ -232,7 +232,7 @@ export function Section1QuestionInput({ onNewQuestion, onSelectSharedQA, onAnswe
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground pointer-events-none z-10" />
             <Input
               ref={inputRef}
-              placeholder="궁금한 것을 검색하세요..."
+              placeholder="검증된 답변을 검색하세요..."
               value={question}
               onChange={(e) => {
                 setQuestion(e.target.value);
@@ -313,7 +313,7 @@ export function Section1QuestionInput({ onNewQuestion, onSelectSharedQA, onAnswe
                     <Pagination search={search} onPage={handlePage} />
                   )}
 
-                  {/* 검색 결과 하단: AI에게 묻기 유도 */}
+                  {/* 검색 결과 하단: 새 길 만들기 유도 */}
                   <div className="mt-6 pt-4 border-t text-center space-y-2">
                     <p className="text-sm text-muted-foreground">원하는 답변이 없나요?</p>
                     <Button
@@ -322,28 +322,56 @@ export function Section1QuestionInput({ onNewQuestion, onSelectSharedQA, onAnswe
                       variant="outline"
                       className="gap-2"
                     >
-                      {isSubmitting ? <Loader2 className="h-4 w-4 animate-spin" /> : "✨"}
-                      &ldquo;{search.query}&rdquo; AI에게 직접 묻기
+                      {isSubmitting ? <Loader2 className="h-4 w-4 animate-spin" /> : "🏔️"}
+                      &ldquo;{search.query}&rdquo; 새 길 만들기
                     </Button>
+                    <p className="text-xs text-muted-foreground">
+                      개척 시 +10 발자국, AI 답변 시 +5 발자국
+                    </p>
                   </div>
                 </>
               ) : (
-                /* 검색 결과 0건: AI 묻기 강조 */
-                <div className="text-center py-10 space-y-4">
-                  <p className="text-sm text-muted-foreground">
-                    &ldquo;{search.query}&rdquo;에 대한 기존 Q&A가 없습니다
-                  </p>
+                /* 검색 결과 0건: 개척자 화면 */
+                <div className="text-center py-10 space-y-6">
+                  <div className="space-y-2">
+                    <div className="text-5xl mb-4">🏔️</div>
+                    <h3 className="text-xl font-bold">아직 아무도 걷지 않은 눈</h3>
+                    <p className="text-sm text-muted-foreground">
+                      &ldquo;{search.query}&rdquo;에 대한 길이 없습니다
+                    </p>
+                  </div>
+
+                  <div className="bg-gradient-to-br from-amber-50 to-orange-50 dark:from-amber-950/30 dark:to-orange-950/30 rounded-2xl p-6 border-2 border-amber-200 dark:border-amber-800 max-w-sm mx-auto">
+                    <div className="text-2xl mb-2">🏅</div>
+                    <h4 className="font-bold text-lg mb-2">개척자가 되세요</h4>
+                    <div className="space-y-2 text-sm text-left">
+                      <div className="flex items-center gap-2">
+                        <span className="text-green-600 font-bold">+10</span>
+                        <span>발자국 즉시 지급</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-green-600 font-bold">+5</span>
+                        <span>AI 답변 생성 시 추가</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-amber-600">👣</span>
+                        <span>뒤따라오는 사람마다 보상</span>
+                      </div>
+                    </div>
+                  </div>
+
                   <Button
                     onClick={handleAskAI}
                     disabled={isSubmitting}
                     size="lg"
-                    className="gap-2 text-base"
+                    className="gap-2 text-base bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600"
                   >
-                    {isSubmitting ? <Loader2 className="h-5 w-5 animate-spin" /> : "✨"}
-                    AI에게 직접 묻기
+                    {isSubmitting ? <Loader2 className="h-5 w-5 animate-spin" /> : "🏔️"}
+                    첫 발자국 남기기
                   </Button>
+
                   <p className="text-xs text-muted-foreground">
-                    첫 번째 Q&A를 만들면 이후 투자자의 보상을 받을 수 있습니다
+                    당신의 발자국이 뒤에 오는 사람의 길이 됩니다
                   </p>
                 </div>
               )}
@@ -391,13 +419,13 @@ export function Section1QuestionInput({ onNewQuestion, onSelectSharedQA, onAnswe
                 </div>
               )}
 
-              {/* ── 🌱 새로 공유된 Q&A (48시간 이내 — Seedling Area) ── */}
+              {/* ── 🌱 새로 열린 길 (48시간 이내) ── */}
               {seedlingQAs.length > 0 && (
                 <div className="mb-6">
                   <div className="flex items-center gap-2 mb-3">
                     <span className="text-base">🌱</span>
-                    <h3 className="text-sm font-semibold">새로 공유된 Q&A</h3>
-                    <span className="text-[10px] text-muted-foreground">48시간 이내 · 첫 투자자가 되어보세요</span>
+                    <h3 className="text-sm font-semibold">새로 열린 길</h3>
+                    <span className="text-[10px] text-muted-foreground">48시간 이내 · 먼저 걸어가세요</span>
                   </div>
                   <div className="space-y-1">
                     {seedlingQAs.map((qa) => (
@@ -414,7 +442,7 @@ export function Section1QuestionInput({ onNewQuestion, onSelectSharedQA, onAnswe
                           <div className="flex items-center gap-2 text-[10px] text-muted-foreground mt-0.5">
                             <span>{qa.creator?.name ?? "익명"}</span>
                             {qa.investorCount === 0 && (
-                              <span className="text-amber-600 dark:text-amber-400 font-medium">초기 투자 보상 3배</span>
+                              <span className="text-amber-600 dark:text-amber-400 font-medium">아직 아무도 안 걸어감</span>
                             )}
                             {qa.tags && qa.tags.length > 0 && (
                               <span>· {qa.tags[0].tag.name}</span>
@@ -426,9 +454,9 @@ export function Section1QuestionInput({ onNewQuestion, onSelectSharedQA, onAnswe
                             onClick={(e) => handleQuickCultivate(e, qa.id)}
                             disabled={cultivatingId === qa.id}
                             className="shrink-0 text-xs px-2.5 py-1 rounded-full border border-green-300 dark:border-green-700 text-green-700 dark:text-green-400 hover:bg-green-100 dark:hover:bg-green-950/50 transition-colors opacity-0 group-hover:opacity-100 disabled:opacity-50"
-                            title="첫 투자자 되기"
+                            title="먼저 걸어가기"
                           >
-                            {cultivatingId === qa.id ? <Loader2 className="h-3 w-3 animate-spin inline" /> : "📈 첫 투자"}
+                            {cultivatingId === qa.id ? <Loader2 className="h-3 w-3 animate-spin inline" /> : "👣 걸어가기"}
                           </button>
                         )}
                       </div>
@@ -440,14 +468,14 @@ export function Section1QuestionInput({ onNewQuestion, onSelectSharedQA, onAnswe
               {/* ── E. 개인 상태 — "👤 나의 현황" (Yu-kai Chou Drive 1+5) ── */}
               <MyStatus />
 
-              {/* ── 🔥 트렌딩 Q&A (인라인 투자 + 활발 표시) ── */}
+              {/* ── 🔥 인기 있는 길 ── */}
               {trendingQAs.length > 0 ? (
                 <>
                   <div className="flex items-center gap-2 mb-4">
                     <TrendingUp className="h-4 w-4 text-orange-500" />
-                    <h3 className="text-sm font-semibold">트렌딩 Q&A</h3>
+                    <h3 className="text-sm font-semibold">인기 있는 길</h3>
                     <span className="text-xs text-muted-foreground">
-                      {activeTag ? `"${activeTag}" 태그` : "커뮤니티가 만든 지식"}
+                      {activeTag ? `"${activeTag}" 태그` : "많은 사람이 걸어간 길"}
                     </span>
                     {activeTag && (
                       <button
@@ -476,18 +504,18 @@ export function Section1QuestionInput({ onNewQuestion, onSelectSharedQA, onAnswe
               ) : activeTag ? (
                 <div className="text-center py-10 text-muted-foreground space-y-2">
                   <div className="text-4xl">🏷️</div>
-                  <p className="font-medium">"{activeTag}" 태그가 달린 Q&A가 없습니다</p>
+                  <p className="font-medium">"{activeTag}" 태그가 달린 길이 없습니다</p>
                   <button onClick={() => setActiveTag(null)} className="text-xs text-primary hover:underline">
                     전체 보기
                   </button>
                 </div>
               ) : (
                 <div className="text-center py-16 text-muted-foreground space-y-4">
-                  <div className="text-5xl">💬</div>
-                  <p className="font-medium text-base">궁금한 것을 검색해보세요</p>
+                  <div className="text-5xl">👣</div>
+                  <p className="font-medium text-base">검증된 답변을 검색하세요</p>
                   <p className="text-sm text-muted-foreground/70 max-w-sm mx-auto leading-relaxed">
-                    이미 공유된 Q&A가 있다면 바로 활용하고,<br />
-                    없다면 AI에게 물어 새 지식을 쌓으세요.
+                    이미 열린 길이 있다면 따라가고,<br />
+                    없다면 새 길을 개척하세요.
                   </p>
                   <div className="flex flex-wrap gap-2 justify-center max-w-md mx-auto pt-2">
                     {["효과적인 코드 리뷰 방법", "마케팅 전략 수립", "팀 회고 진행법", "데이터 분석 기초", "프로젝트 관리 팁"].map((example) => (
