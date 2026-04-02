@@ -39,9 +39,9 @@ const SORT_OPTIONS: { key: SortKey; label: string; icon: string }[] = [
   { key: "hub",       label: "Hub 안목",    icon: "🎯" },
   { key: "authority", label: "Authority",   icon: "⚡" },
   { key: "trustLevel",label: "신뢰 레벨",   icon: "⭐" },
-  { key: "balance",   label: "포인트 잔액", icon: "💎" },
-  { key: "qaSets",    label: "Q&A 수",      icon: "📝" },
-  { key: "invested",  label: "투자 금액",   icon: "💰" },
+  { key: "balance",   label: "발자국 잔액", icon: "👣" },
+  { key: "qaSets",    label: "길 수",       icon: "🛤️" },
+  { key: "invested",  label: "남긴 발자국", icon: "👣" },
 ];
 
 function RankBadge({ rank }: { rank: number }) {
@@ -123,7 +123,7 @@ export default function LeaderboardPage() {
           <div>
             <h1 className="text-2xl font-bold">🏆 리더보드</h1>
             <p className="text-sm text-muted-foreground mt-1">
-              HITS 알고리즘 기반 투자 안목(Hub) & 콘텐츠 권위(Authority) 순위
+              HITS 알고리즘 기반 탐험 안목(Hub) & 콘텐츠 권위(Authority) 순위
             </p>
           </div>
           <Button
@@ -147,25 +147,25 @@ export default function LeaderboardPage() {
           <CardContent className="pt-4 pb-3 space-y-3">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
               <div className="space-y-1.5">
-                <div className="font-semibold text-amber-700 dark:text-amber-400 flex items-center gap-1.5"><HubIcon size={16} /> Hub 점수 (투자 안목)</div>
+                <div className="font-semibold text-amber-700 dark:text-amber-400 flex items-center gap-1.5"><HubIcon size={16} /> Hub 점수 (탐험 안목)</div>
                 <p className="text-xs text-muted-foreground leading-relaxed">
-                  좋은 Q&A를 먼저 발굴해서 투자하면, 이후 투자자들로부터 보상을 받습니다.
+                  좋은 길을 먼저 발굴해서 걸어가면, 이후 걸어간 사람들로부터 보상을 받습니다.
                   이 보상 실적이 Hub 점수에 반영됩니다.
                 </p>
                 <p className="text-xs text-muted-foreground leading-relaxed">
-                  Hub가 높으면 <strong>같은 금액으로 더 큰 실효 지분</strong>을 확보하여
-                  보상에서 유리합니다. (실효 가중치 = √투자금 × Hub)
+                  Hub가 높으면 <strong>같은 발자국 수로 더 큰 실효 지분</strong>을 확보하여
+                  보상에서 유리합니다. (실효 가중치 = √발자국 × Hub)
                 </p>
               </div>
               <div className="space-y-1.5">
                 <div className="font-semibold text-blue-700 dark:text-blue-400 flex items-center gap-1.5"><AuthorityIcon size={16} /> Authority 점수 (창작 권위)</div>
                 <p className="text-xs text-muted-foreground leading-relaxed">
-                  내가 만든 Q&A에 다른 사람들이 투자하면 Authority가 올라갑니다.
+                  내가 연 길에 다른 사람들이 발자국을 남기면 Authority가 올라갑니다.
                   내 콘텐츠가 커뮤니티에서 인정받고 있다는 지표입니다.
                 </p>
                 <p className="text-xs text-muted-foreground leading-relaxed">
                   Authority가 높으면 품질 풀 해제 시 더 많은 보상을 받으며,
-                  포크 Q&A에서 원본으로 더 높은 배분 비율을 확보합니다.
+                  포크 길에서 원본으로 더 높은 배분 비율을 확보합니다.
                 </p>
               </div>
             </div>
@@ -250,7 +250,7 @@ export default function LeaderboardPage() {
                               </span>
                             )}
                             <span className="text-xs text-muted-foreground">
-                              📝 {user._count.qaSets}개 · 🌐 {user.sharedQASets}개 공유
+                              🛤️ {user._count.qaSets}개 · 🌐 {user.sharedQASets}개 열림
                             </span>
                           </div>
                         </div>
@@ -291,17 +291,17 @@ export default function LeaderboardPage() {
             <Card>
               <CardHeader className="pb-3">
                 <CardTitle className="text-sm flex items-center gap-1.5">
-                  <AuthorityIcon size={14} /> Top Authority Q&A
+                  <AuthorityIcon size={14} /> Top Authority 길
                 </CardTitle>
                 <CardDescription className="text-xs">
-                  가장 신뢰받는 콘텐츠
+                  가장 많이 걸어간 길
                 </CardDescription>
               </CardHeader>
               <CardContent className="pt-0">
                 {topAuthorities.length === 0 ? (
                   <div className="text-center py-6 text-sm text-muted-foreground space-y-1.5">
                     <div className="text-3xl">📚</div>
-                    <p>투자 후 HITS 재계산 시<br/>Authority 순위가 표시됩니다</p>
+                    <p>발자국 남긴 후 HITS 재계산 시<br/>Authority 순위가 표시됩니다</p>
                   </div>
                 ) : (
                   <div className="space-y-2">

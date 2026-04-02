@@ -277,10 +277,10 @@ export function OnboardingFlow({ onComplete }: OnboardingFlowProps) {
               <div className="text-6xl animate-bounce">🎉</div>
               <h2 className="text-2xl font-bold">첫 답변 완료!</h2>
               <div className="inline-flex items-center gap-2 bg-green-50 dark:bg-green-950/30 text-green-700 dark:text-green-400 px-4 py-2 rounded-full text-sm font-medium">
-                +{bonusAmount}P 보너스 지급됨
+                +{bonusAmount}👣 보너스 지급됨
               </div>
               <p className="text-sm text-muted-foreground">
-                {bonusAmount}P로 다른 사람의 Q&A에 투자할 수 있습니다
+                {bonusAmount}👣로 다른 사람의 길을 걸어갈 수 있습니다
               </p>
             </div>
 
@@ -304,16 +304,16 @@ export function OnboardingFlow({ onComplete }: OnboardingFlowProps) {
             {/* 이렇게 동작하는 플랫폼입니다 설명 */}
             <Card className="bg-muted/10">
               <CardContent className="py-4 px-5 space-y-2">
-                <p className="text-xs font-medium text-muted-foreground">이 플랫폼에서는...</p>
+                <p className="text-xs font-medium text-muted-foreground">Dapsol에서는...</p>
                 <div className="space-y-1.5 text-sm">
                   <div className="flex items-center gap-2">
                     <span>💬</span><span>AI에게 질문하고 답변을 받을 수 있어요</span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <span>💰</span><span>좋은 Q&A에 투자하면 일찍 발견한 수익을 받아요</span>
+                    <span>👣</span><span>좋은 길을 걸어가면 일찍 발견한 보상을 받아요</span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <span>📉</span><span>AI 답변의 오류에 반대 투자하면 보상을 받아요</span>
+                    <span>📉</span><span>AI 답변의 오류에 반대하면 보상을 받아요</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <span>🙋</span><span>AI가 묻는 질문에 답하면 지식이 축적돼요</span>

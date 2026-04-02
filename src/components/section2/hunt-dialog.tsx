@@ -79,9 +79,9 @@ export function HuntDialog({ open, onOpenChange, qaSet, onHunted }: HuntDialogPr
         await updateSession();
 
         if (data.isCollapsed) {
-          setSuccessMessage("반대 투자 완료! 이 Q&A는 신뢰도 경고 상태가 됩니다.");
+          setSuccessMessage("반대 발자국 완료! 이 길은 신뢰도 경고 상태가 됩니다.");
         } else {
-          setSuccessMessage("반대 투자 등록 완료! 다른 반대 투자자가 동의하면 보상을 받습니다.");
+          setSuccessMessage("반대 발자국 등록 완료! 다른 반대 의견이 동의하면 보상을 받습니다.");
         }
 
         setTimeout(() => {
@@ -91,7 +91,7 @@ export function HuntDialog({ open, onOpenChange, qaSet, onHunted }: HuntDialogPr
         }, 2500);
       } else {
         const error = await res.json();
-        setErrorMessage(error.error || "반대 투자에 실패했습니다.");
+        setErrorMessage(error.error || "반대 발자국에 실패했습니다.");
       }
     } catch (error) {
       console.error("Hunt error:", error);
@@ -114,10 +114,10 @@ export function HuntDialog({ open, onOpenChange, qaSet, onHunted }: HuntDialogPr
         ) : step === "reason" ? (
           <>
             <DialogHeader>
-              <DialogTitle className="text-base">📉 반대 투자하기</DialogTitle>
+              <DialogTitle className="text-base">📉 반대 발자국 남기기</DialogTitle>
               <DialogDescription className="text-sm">
                 AI 답변에서 발견한 문제를 선택하세요.
-                정확한 반대 투자는 보상으로 돌아옵니다.
+                정확한 반대 발자국은 보상으로 돌아옵니다.
               </DialogDescription>
             </DialogHeader>
 
@@ -159,10 +159,10 @@ export function HuntDialog({ open, onOpenChange, qaSet, onHunted }: HuntDialogPr
           <>
             <DialogHeader>
               <DialogTitle className="text-base">
-                📉 {selectedReasonInfo?.icon} {selectedReasonInfo?.label} 반대 투자
+                📉 {selectedReasonInfo?.icon} {selectedReasonInfo?.label} 반대 발자국
               </DialogTitle>
               <DialogDescription className="text-sm">
-                근거를 작성하고 반대 투자 포인트를 설정하세요.
+                근거를 작성하고 반대 발자국 수를 설정하세요.
               </DialogDescription>
             </DialogHeader>
 
@@ -188,8 +188,8 @@ export function HuntDialog({ open, onOpenChange, qaSet, onHunted }: HuntDialogPr
               {/* Amount */}
               <div>
                 <div className="flex items-center justify-between mb-2">
-                  <label className="text-sm font-medium">반대 투자 포인트</label>
-                  <span className="text-xs text-muted-foreground">보유: {balance}P</span>
+                  <label className="text-sm font-medium">반대 발자국 수</label>
+                  <span className="text-xs text-muted-foreground">보유: {balance}👣</span>
                 </div>
                 <Slider
                   value={[huntAmount]}
@@ -205,7 +205,7 @@ export function HuntDialog({ open, onOpenChange, qaSet, onHunted }: HuntDialogPr
                     onChange={(e) => setHuntAmount(Math.min(maxAmount, Math.max(1, parseInt(e.target.value) || 1)))}
                     className="w-20 text-center text-sm"
                   />
-                  <span className="text-xs text-muted-foreground">P</span>
+                  <span className="text-xs text-muted-foreground">👣</span>
                 </div>
               </div>
 
@@ -215,8 +215,8 @@ export function HuntDialog({ open, onOpenChange, qaSet, onHunted }: HuntDialogPr
                   <span className="text-base">🎯</span>
                   <span>
                     {hunterCount > 0
-                      ? `현재 ${hunterCount}명이 반대 투자 중. 동의하는 반대 투자자가 많을수록 보상이 커집니다.`
-                      : "첫 번째 반대 투자자가 됩니다. 다른 반대 투자자가 동의하면 선행 보상을 받습니다."
+                      ? `현재 ${hunterCount}명이 반대 의견. 동의하는 사람이 많을수록 보상이 커집니다.`
+                      : "첫 번째 반대 발자국이 됩니다. 다른 사람이 동의하면 선행 보상을 받습니다."
                     }
                   </span>
                 </div>
@@ -228,7 +228,7 @@ export function HuntDialog({ open, onOpenChange, qaSet, onHunted }: HuntDialogPr
                 <Input
                   value={comment}
                   onChange={(e) => setComment(e.target.value.slice(0, 100))}
-                  placeholder="이 Q&A에 대한 한마디..."
+                  placeholder="이 길에 대한 한마디..."
                   className="mt-1 text-sm"
                 />
               </div>
@@ -249,7 +249,7 @@ export function HuntDialog({ open, onOpenChange, qaSet, onHunted }: HuntDialogPr
                 disabled={isHunting || huntAmount <= 0 || !huntingReason}
                 className="bg-red-600 hover:bg-red-700"
               >
-                {isHunting ? "처리 중..." : `📉 ${huntAmount}P 반대 투자하기`}
+                {isHunting ? "처리 중..." : `📉 ${huntAmount}👣 반대 발자국 남기기`}
               </Button>
             </DialogFooter>
           </>

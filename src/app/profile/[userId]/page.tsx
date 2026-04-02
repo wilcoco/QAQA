@@ -143,13 +143,13 @@ export default function ProfilePage() {
                     <div className="flex items-center gap-2 mt-1 flex-wrap">
                       <TrustLevelBadge level={data.user.trustLevel} />
                       <Badge variant="secondary" className="font-mono">
-                        💎 {data.user.balance} 포인트
+                        👣 {data.user.balance} 발자국
                       </Badge>
                       {data.user.hubScore != null && (
                         <Badge
                           variant="outline"
                           className="font-mono border-amber-300 text-amber-700 dark:text-amber-400"
-                          title="Hub 점수 — 좋은 Q&A를 먼저 발굴하여 보상을 받을수록 상승"
+                          title="Hub 점수 — 좋은 길을 먼저 발굴하여 보상을 받을수록 상승"
                         >
                           <HubIcon size={13} className="mr-0.5" /> Hub {data.user.hubScore.toFixed(2)}
                         </Badge>
@@ -158,7 +158,7 @@ export default function ProfilePage() {
                         <Badge
                           variant="outline"
                           className="font-mono border-blue-300 text-blue-700 dark:text-blue-400"
-                          title="Authority 점수 — 내 Q&A에 다른 사람들이 투자할수록 상승"
+                          title="Authority 점수 — 내 길에 다른 사람들이 걸어갈수록 상승"
                         >
                           <AuthorityIcon size={13} className="mr-0.5" /> Auth {(data.user.authorityScore as number).toFixed(2)}
                         </Badge>
@@ -176,9 +176,9 @@ export default function ProfilePage() {
 
             {/* Stats grid */}
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-              <StatCard icon="📝" label="총 Q&A" value={data.stats.totalQASets} />
-              <StatCard icon="🌐" label="공유된 Q&A" value={data.stats.sharedQASets} />
-              <StatCard icon="💎" label="총 투자 금액" value={`${data.stats.totalAmountInvested.toLocaleString()}`} />
+              <StatCard icon="🛤️" label="총 길" value={data.stats.totalQASets} />
+              <StatCard icon="🌐" label="열린 길" value={data.stats.sharedQASets} />
+              <StatCard icon="👣" label="남긴 발자국 수" value={`${data.stats.totalAmountInvested.toLocaleString()}`} />
               <StatCard icon="🎁" label="받은 보상" value={`${data.stats.totalRewardsReceived.toLocaleString()}`} />
             </div>
 
@@ -198,14 +198,14 @@ export default function ProfilePage() {
                       </div>
                       <p className="text-xs text-muted-foreground leading-relaxed">
                         {data.user.hubScore >= 10
-                          ? "탁월한 투자 안목 — 가치 있는 Q&A를 일찍 발굴하고 있습니다."
+                          ? "탁월한 탐험 안목 — 가치 있는 길을 일찍 발굴하고 있습니다."
                           : data.user.hubScore >= 5
-                          ? "좋은 투자 안목 — 계속해서 더 많은 Q&A에 투자해보세요."
-                          : "투자 안목 성장 중 — 좋은 Q&A를 발굴할수록 점수가 오릅니다."}
+                          ? "좋은 탐험 안목 — 계속해서 더 많은 길을 걸어보세요."
+                          : "탐험 안목 성장 중 — 좋은 길을 발굴할수록 점수가 오릅니다."}
                       </p>
                       <div className="text-[10px] text-muted-foreground/70 leading-relaxed border-t border-amber-200/50 pt-2">
-                        Hub는 투자 안목을 나타냅니다. 나중에 인기 있는 Q&A에 먼저 투자하면 후속 투자자들로부터
-                        보상을 받고, 이 보상 실적이 Hub 점수에 반영됩니다. Hub가 높으면 같은 금액으로 더 큰 실효 지분을 확보합니다.
+                        Hub는 탐험 안목을 나타냅니다. 나중에 인기 있는 길에 먼저 발자국을 남기면 후속으로 걸어간 사람들로부터
+                        보상을 받고, 이 보상 실적이 Hub 점수에 반영됩니다. Hub가 높으면 같은 발자국 수로 더 큰 실효 지분을 확보합니다.
                       </div>
                     </CardContent>
                   </Card>
@@ -223,14 +223,14 @@ export default function ProfilePage() {
                       </div>
                       <p className="text-xs text-muted-foreground leading-relaxed">
                         {(data.user.authorityScore as number) >= 200
-                          ? "뛰어난 창작 권위 — 다른 투자자들이 당신의 Q&A를 신뢰합니다."
+                          ? "뛰어난 창작 권위 — 다른 사람들이 당신의 길을 걸어갑니다."
                           : (data.user.authorityScore as number) >= 130
-                          ? "성장 중인 권위 — 더 많은 콘텐츠를 공유하고 투자를 유치해보세요."
-                          : "초기 권위 — Q&A를 공유하고 다른 사람들의 투자를 받으면 상승합니다."}
+                          ? "성장 중인 권위 — 더 많은 길을 열고 발자국을 유치해보세요."
+                          : "초기 권위 — 길을 열고 다른 사람들의 발자국을 받으면 상승합니다."}
                       </p>
                       <div className="text-[10px] text-muted-foreground/70 leading-relaxed border-t border-blue-200/50 pt-2">
-                        Authority는 콘텐츠 창작자로서의 신뢰도입니다. 내가 만든 Q&A에 다른 사람들이 투자하면 상승합니다.
-                        기본값은 100이며, 외부 투자가 쌓일수록 올라가지만 높은 점수일수록 올리기 어렵습니다 (로그 스케일).
+                        Authority는 콘텐츠 창작자로서의 신뢰도입니다. 내가 연 길에 다른 사람들이 발자국을 남기면 상승합니다.
+                        기본값은 100이며, 외부 발자국이 쌓일수록 올라가지만 높은 점수일수록 올리기 어렵습니다 (로그 스케일).
                       </div>
                     </CardContent>
                   </Card>
@@ -241,11 +241,11 @@ export default function ProfilePage() {
             {/* Recent Q&A Sets */}
             <Card>
               <CardHeader>
-                <CardTitle className="text-base">최근 Q&A</CardTitle>
+                <CardTitle className="text-base">최근 길</CardTitle>
               </CardHeader>
               <CardContent className="p-0">
                 {data.recentQASets.length === 0 ? (
-                  <p className="text-sm text-muted-foreground p-4">아직 Q&A가 없습니다.</p>
+                  <p className="text-sm text-muted-foreground p-4">아직 길이 없습니다.</p>
                 ) : (
                   <div className="divide-y">
                     {data.recentQASets.map((qa) => (
@@ -257,7 +257,7 @@ export default function ProfilePage() {
                         <div className="flex-1 min-w-0">
                           <p className="text-sm font-medium truncate">{qa.title ?? "제목 없음"}</p>
                           <p className="text-xs text-muted-foreground mt-0.5">
-                            💬 {qa._count.messages}개 · 👁️ {qa.viewCount} · 💎 {qa.totalInvested - (qa.negativeInvested ?? 0)} 순투자
+                            💬 {qa._count.messages}개 · 👁️ {qa.viewCount} · 👣 {qa.totalInvested - (qa.negativeInvested ?? 0)} 순발자국
                             {(qa.negativeInvested ?? 0) > 0 && (
                               <span className="text-red-500 ml-0.5">(-{qa.negativeInvested} 🔻{qa.negativeCount})</span>
                             )}
@@ -269,7 +269,7 @@ export default function ProfilePage() {
                           </p>
                         </div>
                         {qa.isShared && (
-                          <Badge variant="secondary" className="text-xs ml-2 shrink-0">공유됨</Badge>
+                          <Badge variant="secondary" className="text-xs ml-2 shrink-0">열림</Badge>
                         )}
                       </Link>
                     ))}
@@ -281,11 +281,11 @@ export default function ProfilePage() {
             {/* Recent Investments */}
             <Card>
               <CardHeader>
-                <CardTitle className="text-base">최근 투자</CardTitle>
+                <CardTitle className="text-base">최근 걸어간 길</CardTitle>
               </CardHeader>
               <CardContent className="p-0">
                 {data.recentInvestments.length === 0 ? (
-                  <p className="text-sm text-muted-foreground p-4">아직 투자 내역이 없습니다.</p>
+                  <p className="text-sm text-muted-foreground p-4">아직 걸어간 길이 없습니다.</p>
                 ) : (
                   <div className="divide-y">
                     {data.recentInvestments.map((inv) => (
@@ -329,7 +329,7 @@ export default function ProfilePage() {
                 <CardTitle className="text-base flex items-center gap-2">
                   🎁 보상 이력
                   <Badge variant="secondary" className="text-xs font-normal">
-                    총 +{data.stats.totalRewardsReceived.toLocaleString()} 💎
+                    총 +{data.stats.totalRewardsReceived.toLocaleString()} 👣
                   </Badge>
                 </CardTitle>
               </CardHeader>
@@ -340,21 +340,21 @@ export default function ProfilePage() {
                   <div className="divide-y">
                     {(data.rewardHistory ?? []).map((ev) => {
                       const typeLabel: Record<string, string> = {
-                        proportional_distribution: "📈 선투자 보상",
-                        hub_weighted_distribution: "📈 선투자 보상",
-                        quality_pool_creator: "🏆 품질 풀 (제작자)",
+                        proportional_distribution: "📈 선행자 보상",
+                        hub_weighted_distribution: "📈 선행자 보상",
+                        quality_pool_creator: "🏆 품질 풀 (개척자)",
                         quality_pool_investor: "🔓 품질 풀 해제",
                         uninvest_refund: "↩️ 철회 환급",
                         fork_royalty: "🔗 포크 로열티",
                         authority_ratio_royalty: "⚡ Authority 배분",
                       };
                       const typeDesc: Record<string, string> = {
-                        proportional_distribution: "후속 투자자가 투자하여 발생한 보상",
-                        hub_weighted_distribution: "후속 투자자가 투자하여 발생한 보상",
-                        quality_pool_creator: "투자자 마일스톤 달성으로 품질 풀에서 해제",
-                        quality_pool_investor: "투자자 마일스톤 달성으로 품질 풀에서 해제",
-                        uninvest_refund: "투자 철회 시 환급 (20% 수수료 차감)",
-                        fork_royalty: "확장된 Q&A에서 원본으로 배분",
+                        proportional_distribution: "후속으로 걸어간 사람이 발자국을 남겨 발생한 보상",
+                        hub_weighted_distribution: "후속으로 걸어간 사람이 발자국을 남겨 발생한 보상",
+                        quality_pool_creator: "걸어간 사람 마일스톤 달성으로 품질 풀에서 해제",
+                        quality_pool_investor: "걸어간 사람 마일스톤 달성으로 품질 풀에서 해제",
+                        uninvest_refund: "철회 시 환급 (20% 수수료 차감)",
+                        fork_royalty: "확장된 길에서 원본으로 배분",
                         authority_ratio_royalty: "Authority 비율 기반 배분",
                       };
                       const label = typeLabel[ev.rewardType] ?? `💎 ${ev.rewardType}`;
@@ -383,7 +383,7 @@ export default function ProfilePage() {
                             </div>
                           </div>
                           <Badge className="font-mono ml-2 shrink-0 bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400 border-0">
-                            +{ev.amount} 💎
+                            +{ev.amount} 👣
                           </Badge>
                         </div>
                       );

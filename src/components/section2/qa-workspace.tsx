@@ -200,7 +200,7 @@ export function Section2Workspace({
   const shouldShowRecommendHint = isSharedNotOwner && !dismissedRecommendHint && messages.length >= 2;
 
   const handleUninvest = async (investmentId: string) => {
-    if (!confirm("투자를 철회하시겠습니까? 원금의 20%가 차감됩니다.")) return;
+    if (!confirm("발자국을 지우시겠습니까? 원금의 20%가 차감됩니다.")) return;
     setUninvestingId(investmentId);
     try {
       const res = await fetch(`/api/investments/${investmentId}/uninvest`, { method: "POST" });
@@ -244,7 +244,7 @@ export function Section2Workspace({
                   onClick={() => setShowInvestors(v => !v)}
                   className="text-xs text-muted-foreground hover:text-foreground transition-colors"
                 >
-                  💰 {totalRecommended}P · {recommendCount}명 투자
+                  👣 {totalRecommended} · {recommendCount}명 걸어감
                 </button>
               )}
             </div>
@@ -274,11 +274,11 @@ export function Section2Workspace({
       {/* Stat bar for shared Q&A */}
       {qaSet.isShared && (
         <div className="px-4 py-1.5 border-b bg-muted/20 flex items-center gap-4 text-xs text-muted-foreground">
-          <span>💰 {totalRecommended}P 투자됨</span>
-          <span>{recommendCount}명 투자</span>
+          <span>👣 {totalRecommended} 발자국</span>
+          <span>{recommendCount}명 걸어감</span>
           <span>메시지 {messages.length}개</span>
           {(qaSet.negativeCount ?? 0) > 0 && (
-            <span className="text-red-500">📉 {qaSet.negativeInvested ?? 0}P · {qaSet.negativeCount}명 반대 투자</span>
+            <span className="text-red-500">📉 {qaSet.negativeInvested ?? 0} · {qaSet.negativeCount}명 반대</span>
           )}
         </div>
       )}
@@ -286,7 +286,7 @@ export function Section2Workspace({
       {/* Investor list (toggle) */}
       {showInvestors && qaSet.isShared && (qaSet.investments ?? []).length > 0 && (
         <div className="border-b bg-muted/20 px-4 py-2 space-y-1.5 text-xs">
-          <div className="font-medium text-muted-foreground mb-1">투자자</div>
+          <div className="font-medium text-muted-foreground mb-1">걸어간 사람들</div>
           {(qaSet.investments ?? []).filter(inv => !inv.isNegative).map((inv) => {
             const isMine = inv.userId === session?.user?.id;
             const investedAt = new Date(inv.createdAt);
@@ -302,7 +302,7 @@ export function Section2Workspace({
                   <span className={isMine ? "font-medium" : ""}>{inv.user.name ?? "익명"}{isMine ? " (나)" : ""}</span>
                 </div>
                 <div className="flex items-center gap-3 shrink-0">
-                  <span className="font-mono text-muted-foreground">{inv.amount}P</span>
+                  <span className="font-mono text-muted-foreground">{inv.amount}👣</span>
                   {canUninvest && (
                     <button
                       onClick={() => handleUninvest(inv.id)}
@@ -470,7 +470,7 @@ export function Section2Workspace({
           {humanAnswerMode && messages.length <= 1 && (
             <div className="max-w-3xl mx-auto mb-3 p-3 rounded-lg bg-gradient-to-r from-emerald-50 to-teal-50 dark:from-emerald-950/30 dark:to-teal-950/30 border border-emerald-200 dark:border-emerald-800">
               <p className="text-sm font-medium text-emerald-800 dark:text-emerald-300">✍️ 내 경험과 지식으로 직접 답변해주세요</p>
-              <p className="text-xs text-emerald-600 dark:text-emerald-400 mt-0.5">답변 후 Q&A를 공유하면 다른 사람이 투자할 수 있고, 보상이 돌아옵니다.</p>
+              <p className="text-xs text-emerald-600 dark:text-emerald-400 mt-0.5">답변 후 길을 열면 다른 사람이 걸어갈 수 있고, 보상이 돌아옵니다.</p>
             </div>
           )}
           <div className="max-w-3xl mx-auto flex gap-2">

@@ -50,7 +50,7 @@ export function InvestorComments({ qaSetId }: InvestorCommentsProps) {
   return (
     <div className="space-y-2">
       <div className="text-xs font-medium text-muted-foreground flex items-center gap-1.5">
-        <span>💬</span> 투자자 코멘트 ({comments.length})
+        <span>💬</span> 걸어간 사람들의 코멘트 ({comments.length})
       </div>
       <div className="space-y-1.5">
         {comments.map((c) => (

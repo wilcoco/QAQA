@@ -35,8 +35,8 @@ export function MyStatus() {
       <div className="rounded-xl border bg-card p-4">
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-2">
-            <span className="text-lg">💰</span>
-            <span className="text-base font-bold tabular-nums">{balance.toLocaleString()}P</span>
+            <span className="text-lg">👣</span>
+            <span className="text-base font-bold tabular-nums">{balance.toLocaleString()}👣</span>
             <span className="text-xs px-2 py-0.5 rounded-full bg-primary/10 text-primary font-medium">
               Lv.{trustLevel} {title}
             </span>

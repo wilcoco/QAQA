@@ -865,7 +865,7 @@ export function LiveActivityGraph({ onSelectQASet, onNavigateToMap, onNavigateTo
           <span className="inline-block w-4 h-2.5 rounded-sm border border-green-400 bg-green-500/20" /> 답변
         </span>
         <span className="flex items-center gap-1">
-          <span className="inline-block w-2.5 h-2.5 rounded-full bg-amber-500/30 border border-amber-400" /> 투자
+          <span className="inline-block w-2.5 h-2.5 rounded-full bg-amber-500/30 border border-amber-400" /> 발자국
         </span>
         <span className="flex items-center gap-1">
           <span className="inline-block w-2.5 h-2.5 rounded-full bg-red-500/30 border border-red-400" /> 반대

@@ -42,8 +42,8 @@ function JourneyStepper({ step }: { step: number }) {
     { label: "질문", icon: "?" },
     { label: "답변", icon: "A" },
     { label: "판단", icon: "🔍" },
-    { label: "공유", icon: "📢" },
-    { label: "투자", icon: "💰" },
+    { label: "길 열기", icon: "📢" },
+    { label: "걸어가기", icon: "👣" },
   ];
 
   return (
@@ -94,16 +94,16 @@ function InvestStats({
     <div className="flex items-center gap-3 text-xs">
       {investorCount > 0 && (
         <div className="flex items-center gap-1.5 bg-green-50 dark:bg-green-950/30 text-green-700 dark:text-green-400 px-2.5 py-1 rounded-full font-medium">
-          <span className="text-sm">💰</span>
+          <span className="text-sm">👣</span>
           <span className="text-base font-bold tabular-nums">{totalInvested}</span>
-          <span>P · {investorCount}명</span>
+          <span>👣 · {investorCount}명</span>
         </div>
       )}
       {negativeCount > 0 && (
         <div className="flex items-center gap-1.5 bg-red-50 dark:bg-red-950/30 text-red-600 dark:text-red-400 px-2.5 py-1 rounded-full font-medium">
           <span className="text-sm">📉</span>
           <span className="text-base font-bold tabular-nums">{negativeInvested}</span>
-          <span>P · {negativeCount}명</span>
+          <span>👣 · {negativeCount}명</span>
         </div>
       )}
     </div>
@@ -344,12 +344,12 @@ export function ReviewGuide({
                 <div>
                   <h3 className="text-base font-semibold">답변이 등록되었습니다!</h3>
                   <p className="text-xs text-muted-foreground mt-0.5">
-                    이제 공유하면 다른 사람들이 투자하고, 의견을 달 수 있습니다
+                    이제 길을 열면 다른 사람들이 발자국을 남기고, 의견을 달 수 있습니다
                   </p>
                 </div>
               </div>
               <Button onClick={onShareQA} className="w-full gap-2 h-10 text-sm font-medium bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm">
-                📢 공유하고 투자 받기
+                📢 길 열고 발자국 받기
               </Button>
             </div>
           </div>
@@ -376,32 +376,32 @@ export function ReviewGuide({
           {/* Progress: 질문 → 답변 → [판단] 단계 */}
           <JourneyStepper step={2} />
 
-          {/* AI 답변 평가 — 반대투자로 표현 */}
+          {/* AI 답변 평가 — 반대 발자국으로 표현 */}
           <div className="grid grid-cols-2 gap-3">
-            {/* 만족 → 공유로 이어짐 */}
+            {/* 만족 → 길 열기로 이어짐 */}
             <div className="relative overflow-hidden rounded-2xl border-2 border-primary/20 bg-gradient-to-br from-primary/5 via-primary/10 to-blue-500/5 p-4 space-y-2 group hover:shadow-md transition-all">
               <div className="absolute -bottom-4 -right-4 text-6xl opacity-10 group-hover:opacity-20 transition-opacity">📢</div>
               <div className="relative">
                 <h3 className="text-sm font-semibold">이 답변이 유용하다면</h3>
                 <p className="text-[11px] text-muted-foreground mt-1 leading-relaxed">
-                  공유하면 다른 사람이 투자할 수 있고, 투자 보상을 받습니다
+                  길을 열면 다른 사람이 발자국을 남길 수 있고, 보상을 받습니다
                 </p>
                 <Button size="sm" className="w-full gap-1.5 mt-2.5 shadow-sm" onClick={onShareQA}>
-                  📢 공유하고 투자 받기
+                  📢 길 열고 발자국 받기
                 </Button>
               </div>
             </div>
 
-            {/* 불만족 → 반대투자(AI 답변 평가) */}
+            {/* 불만족 → 반대 발자국(AI 답변 평가) */}
             <div className="relative overflow-hidden rounded-2xl border border-red-200 dark:border-red-900 bg-gradient-to-br from-red-50/50 to-orange-50/50 dark:from-red-950/20 dark:to-orange-950/20 p-4 space-y-2 group hover:shadow-md hover:shadow-red-100 dark:hover:shadow-red-950/20 transition-all">
               <div className="absolute -bottom-4 -right-4 text-6xl opacity-10 group-hover:opacity-20 transition-opacity">📉</div>
               <div className="relative">
                 <h3 className="text-sm font-semibold">답변이 부정확하다면</h3>
                 <p className="text-[11px] text-muted-foreground mt-1 leading-relaxed">
-                  반대 투자로 AI 답변의 문제점을 기록하세요
+                  반대 발자국으로 AI 답변의 문제점을 기록하세요
                 </p>
                 <Button size="sm" variant="outline" className="w-full gap-1.5 mt-2.5 text-red-600 border-red-300 hover:bg-red-50 dark:hover:bg-red-950/30" onClick={onCounterInvest}>
-                  📉 반대 투자
+                  📉 반대 발자국
                 </Button>
               </div>
             </div>
@@ -506,16 +506,16 @@ export function ReviewGuide({
               <div className="absolute top-0 right-0 w-24 h-24 bg-amber-200/20 rounded-full -translate-y-1/2 translate-x-1/2" />
               <div className="relative space-y-2">
                 <div className="flex items-center gap-2">
-                  <span className="text-2xl">💰</span>
+                  <span className="text-2xl">👣</span>
                   <div>
-                    <h3 className="text-base font-semibold">작성자 투자로 신뢰를 보여주세요</h3>
+                    <h3 className="text-base font-semibold">작성자 발자국으로 신뢰를 보여주세요</h3>
                     <p className="text-xs text-muted-foreground mt-0.5">
-                      직접 포인트를 거는 작성자의 Q&A는 다른 사람의 투자를 더 많이 유도합니다
+                      직접 발자국을 남기는 작성자의 길은 다른 사람의 발자국을 더 많이 유도합니다
                     </p>
                   </div>
                 </div>
                 <Button onClick={onInvest} className="w-full gap-2 h-10 text-sm font-medium bg-amber-600 hover:bg-amber-700 text-white shadow-sm">
-                  💰 내 Q&A에 투자하기
+                  👣 내 길에 발자국 남기기
                 </Button>
               </div>
             </div>
@@ -524,11 +524,11 @@ export function ReviewGuide({
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <span className="text-lg">✅</span>
-                  <span className="text-sm font-medium">내 투자: {myInvestment.amount}P</span>
+                  <span className="text-sm font-medium">내 발자국: {myInvestment.amount}👣</span>
                 </div>
                 {investorCount > 1 && (
                   <span className="text-xs text-muted-foreground">
-                    + {investorCount - 1}명이 추가 투자
+                    + {investorCount - 1}명이 추가로 걸어감
                   </span>
                 )}
               </div>
@@ -536,34 +536,34 @@ export function ReviewGuide({
           )
         ) : (
           <div className="grid grid-cols-2 gap-3">
-            {/* 투자 */}
+            {/* 걸어가기 */}
             <div className="relative overflow-hidden rounded-2xl border-2 border-green-200 dark:border-green-800 bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-950/30 dark:to-emerald-950/30 p-4 space-y-2 group hover:shadow-md hover:shadow-green-100 dark:hover:shadow-green-950/20 transition-all">
-              <div className="absolute -bottom-4 -right-4 text-6xl opacity-10 group-hover:opacity-20 transition-opacity">💰</div>
+              <div className="absolute -bottom-4 -right-4 text-6xl opacity-10 group-hover:opacity-20 transition-opacity">👣</div>
               <div className="relative">
                 <h3 className="text-sm font-semibold">정확하고 유용하다면</h3>
                 <p className="text-[11px] text-muted-foreground mt-1 leading-relaxed">
                   {investorCount === 0
-                    ? "첫 번째 투자자가 되세요 — 초기 투자자일수록 보상이 큽니다"
-                    : `${investorCount}명이 신뢰함 · 일찍 투자할수록 더 많은 보상`
+                    ? "첫 번째로 걸어가세요 — 먼저 걸어갈수록 보상이 큽니다"
+                    : `${investorCount}명이 걸어감 · 일찍 걸어갈수록 더 많은 보상`
                   }
                 </p>
                 <Button size="sm" className="w-full gap-1.5 mt-2.5 bg-green-600 hover:bg-green-700 text-white shadow-sm" onClick={onInvest}>
-                  💰 투자하기
+                  👣 발자국 남기기
                 </Button>
               </div>
             </div>
 
-            {/* 반대 투자 */}
+            {/* 반대 발자국 */}
             <div className="relative overflow-hidden rounded-2xl border border-red-200 dark:border-red-900 bg-gradient-to-br from-red-50/50 to-orange-50/50 dark:from-red-950/20 dark:to-orange-950/20 p-4 space-y-2 group hover:shadow-md hover:shadow-red-100 dark:hover:shadow-red-950/20 transition-all">
               <div className="absolute -bottom-4 -right-4 text-6xl opacity-10 group-hover:opacity-20 transition-opacity">📉</div>
               <div className="relative">
                 <h3 className="text-sm font-semibold">틀리거나 오래된 정보라면</h3>
                 <p className="text-[11px] text-muted-foreground mt-1 leading-relaxed">
-                  근거와 함께 반대 투자 — 동의자가 늘면 보상을 받습니다
+                  근거와 함께 반대 발자국 — 동의자가 늘면 보상을 받습니다
                   {negativeCount > 0 && <span className="font-medium"> · 현재 {negativeCount}명 동의</span>}
                 </p>
                 <Button size="sm" variant="outline" className="w-full gap-1.5 mt-2.5 text-red-600 border-red-300 hover:bg-red-50 dark:hover:bg-red-950/30" onClick={onCounterInvest}>
-                  📉 반대 투자
+                  📉 반대 발자국
                 </Button>
               </div>
             </div>

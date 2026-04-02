@@ -172,9 +172,9 @@ export function GlobalKnowledgeGraph({ onSelectQASet, isActive = false }: Global
       <div className="h-full flex items-center justify-center text-muted-foreground">
         <div className="text-center space-y-3">
           <div className="text-5xl">🌐</div>
-          <h3 className="text-lg font-medium">공유된 Q&A가 없습니다</h3>
+          <h3 className="text-lg font-medium">열린 길이 없습니다</h3>
           <p className="text-sm max-w-sm leading-relaxed">
-            Q&A를 공유하면 전체 지식 지도에 표시됩니다.
+            길을 열면 전체 지식 지도에 표시됩니다.
           </p>
         </div>
       </div>
@@ -199,7 +199,7 @@ export function GlobalKnowledgeGraph({ onSelectQASet, isActive = false }: Global
         <div className="flex items-center gap-3 text-xs text-muted-foreground flex-wrap">
           <span className="flex items-center gap-1">
             <span className="inline-block w-3 h-3 rounded border-2 border-green-500 bg-green-50" />
-            고투자
+            많이 걸어감
           </span>
           <span className="flex items-center gap-1">
             <span className="inline-block w-3 h-3 rounded border-2 border-gray-400 bg-gray-50" />
@@ -219,7 +219,7 @@ export function GlobalKnowledgeGraph({ onSelectQASet, isActive = false }: Global
           </span>
         </div>
         <Badge variant="secondary" className="text-xs shrink-0">
-          {nodes.length} Q&A · {edges.length} 링크
+          {nodes.length} 길 · {edges.length} 링크
         </Badge>
       </div>
 
@@ -388,10 +388,10 @@ export function GlobalKnowledgeGraph({ onSelectQASet, isActive = false }: Global
                           </p>
                         )}
                         <div className="flex flex-wrap gap-2 text-[10px] text-gray-500 dark:text-gray-400 pt-0.5">
-                          <span>작성자: {node.data.creatorName ?? "익명"}</span>
+                          <span>개척자: {node.data.creatorName ?? "익명"}</span>
                           <span>메시지: {node.data.messageCount}개</span>
-                          <span>투자자: {node.data.investorCount}명</span>
-                          <span>투자액: +{node.data.totalInvested}</span>
+                          <span>걸어간 사람: {node.data.investorCount}명</span>
+                          <span>발자국: +{node.data.totalInvested}</span>
                           {node.data.negativeInvested > 0 && (
                             <span className="text-red-500">반대: -{node.data.negativeInvested}</span>
                           )}
