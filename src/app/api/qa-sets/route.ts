@@ -42,11 +42,32 @@ export async function GET(req: NextRequest) {
       tags: {
         include: { tag: { select: { name: true, slug: true } } },
       },
+      // AI 답변 (첫 번째 assistant 메시지)
+      messages: {
+        where: { role: "assistant" },
+        take: 1,
+        orderBy: { createdAt: "asc" },
+        select: { content: true, role: true },
+      },
       _count: { select: { messages: true } },
     },
   });
 
-  return NextResponse.json({ qaSets });
+  // 각 QASet에 의견 수 추가
+  const qaSetIds = qaSets.map(q => q.id);
+  const opinionCounts = await prisma.nodeRelation.groupBy({
+    by: ["targetQASetId"],
+    where: { targetQASetId: { in: qaSetIds } },
+    _count: true,
+  });
+  const opinionCountMap = new Map(opinionCounts.map(c => [c.targetQASetId, c._count]));
+
+  const enrichedQASets = qaSets.map(qa => ({
+    ...qa,
+    opinionCount: opinionCountMap.get(qa.id) ?? 0,
+  }));
+
+  return NextResponse.json({ qaSets: enrichedQASets });
 }
 
 // POST /api/qa-sets - Create new Q&A set

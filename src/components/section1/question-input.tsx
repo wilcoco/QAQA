@@ -379,11 +379,13 @@ export function Section1QuestionInput({ onNewQuestion, onSelectSharedQA, onAnswe
             </div>
           )}
 
-          {/* ══════ Home Feed (Julie Zhuo layout) ══════ */}
+          {/* ══════ 통합 피드 (Reddit 스타일) ══════ */}
           {showTrending && (
             <div>
+              {/* 나의 현황 (컴팩트) */}
+              <MyStatus />
 
-              {/* ── Cluster Filter Chips (컴팩트) ── */}
+              {/* 태그 필터 */}
               {popularTags.length > 0 && (
                 <div className="flex items-center gap-1 mb-3 overflow-x-auto pb-1 scrollbar-hide">
                   <button
@@ -407,136 +409,25 @@ export function Section1QuestionInput({ onNewQuestion, onSelectSharedQA, onAnswe
                       }`}
                     >
                       {tag.name}
-                      <span className="ml-0.5 opacity-60">{tag.count}</span>
                     </button>
                   ))}
                 </div>
               )}
 
-              {/* ── 🌱 새로 열린 길 (48시간 이내, 컴팩트) ── */}
-              {seedlingQAs.length > 0 && (
-                <div className="mb-4">
-                  <div className="flex items-center gap-1.5 mb-2">
-                    <span className="text-sm">🌱</span>
-                    <h3 className="text-xs font-semibold">새로 열린 길</h3>
-                    <span className="text-[9px] text-muted-foreground">48h 이내</span>
-                  </div>
-                  <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide -mx-1 px-1">
-                    {seedlingQAs.map((qa) => (
-                      <div
-                        key={qa.id}
-                        className="shrink-0 w-[200px] p-2.5 rounded-lg border bg-green-50/30 dark:bg-green-950/10 border-green-200/50 dark:border-green-800/30 cursor-pointer hover:border-green-400 dark:hover:border-green-600 transition-colors"
-                        onClick={() => onSelectSharedQA(qa.id)}
-                      >
-                        <p className="text-xs font-medium line-clamp-2 leading-snug mb-1">
-                          {qa.title ?? "제목 없음"}
-                        </p>
-                        <div className="flex items-center justify-between text-[9px] text-muted-foreground">
-                          <span>{qa.creator?.name ?? "익명"}</span>
-                          {qa.investorCount === 0 ? (
-                            <span className="text-amber-600 dark:text-amber-400">첫 발자국 가능</span>
-                          ) : (
-                            <span>👣 {qa.investorCount}</span>
-                          )}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* ── E. 개인 상태 — "👤 나의 현황" (Yu-kai Chou Drive 1+5) ── */}
-              <MyStatus />
-
-              {/* ── 🎯 AI가 인정한 정보 (Q→A→수정 구조) ── */}
-              {aiApprovedOpinions.length > 0 && (
-                <div className="mb-4">
-                  <div className="flex items-center gap-1.5 mb-2">
-                    <span className="text-sm">🎯</span>
-                    <h3 className="text-xs font-semibold">AI가 인정한 정보</h3>
-                  </div>
-                  <div className="space-y-2">
-                    {aiApprovedOpinions.map((opinion) => (
-                      <div
-                        key={opinion.id}
-                        className="p-2.5 rounded-lg border border-amber-200/50 dark:border-amber-800/30 bg-amber-50/30 dark:bg-amber-950/10 hover:border-amber-300 dark:hover:border-amber-700 transition-colors cursor-pointer"
-                        onClick={() => opinion.qaSet && onSelectSharedQA(opinion.qaSet.id)}
-                      >
-                        {/* Q: 질문 */}
-                        {opinion.qaSet?.title && (
-                          <div className="flex items-start gap-1.5 mb-1.5">
-                            <span className="shrink-0 w-4 h-4 rounded-full bg-blue-100 dark:bg-blue-900/50 flex items-center justify-center text-[8px]">👤</span>
-                            <p className="text-[11px] text-foreground line-clamp-1 flex-1">{opinion.qaSet.title}</p>
-                          </div>
-                        )}
-                        {/* A: AI 답변 */}
-                        {opinion.qaSet?.aiAnswer && (
-                          <div className="flex items-start gap-1.5 mb-1.5">
-                            <span className="shrink-0 w-4 h-4 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center text-[8px]">🤖</span>
-                            <p className="text-[10px] text-muted-foreground line-clamp-1 flex-1">{opinion.qaSet.aiAnswer}</p>
-                          </div>
-                        )}
-                        {/* 수정: 사용자 빈틈 채우기 */}
-                        <div className="flex items-start gap-1.5">
-                          {opinion.user.image ? (
-                            <img src={opinion.user.image} alt="" className="shrink-0 w-4 h-4 rounded-full" />
-                          ) : (
-                            <span className="shrink-0 w-4 h-4 rounded-full bg-amber-100 dark:bg-amber-900/50 flex items-center justify-center text-[8px]">✏️</span>
-                          )}
-                          <p className="text-[11px] text-amber-700 dark:text-amber-400 line-clamp-1 flex-1 font-medium">{opinion.content}</p>
-                        </div>
-                        {/* 메타 */}
-                        <div className="flex items-center gap-2 text-[9px] text-muted-foreground mt-1.5 pl-5">
-                          <span>{opinion.user.name ?? "익명"}</span>
-                          <span className="text-amber-600 dark:text-amber-400 font-medium">AI 👣{opinion.aiInvestment}</span>
-                          {opinion.investorCount > 1 && <span>+{opinion.investorCount - 1}명 동의</span>}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* ── 🔥 인기 있는 길 (컴팩트) ── */}
+              {/* 통합 피드 */}
               {trendingQAs.length > 0 ? (
-                <>
-                  <div className="flex items-center gap-1.5 mb-2">
-                    <TrendingUp className="h-3.5 w-3.5 text-orange-500" />
-                    <h3 className="text-xs font-semibold">인기 있는 길</h3>
-                    <span className="text-[9px] text-muted-foreground">
-                      {activeTag ? `#${activeTag}` : ""}
-                    </span>
-                    {activeTag && (
-                      <button
-                        onClick={() => setActiveTag(null)}
-                        className="text-[9px] text-muted-foreground hover:text-foreground ml-auto"
-                      >
-                        ✕
-                      </button>
-                    )}
-                  </div>
-                  <div className="divide-y divide-border/50">
-                    {trendingQAs.map((qa, i) => (
-                      <SearchResultItem
-                        key={qa.id}
-                        qa={qa}
-                        index={i}
-                        onClick={() => onSelectSharedQA(qa.id)}
-                        onCultivate={handleQuickCultivate}
-                        cultivatingId={cultivatingId}
-                        isLoggedIn={!!session?.user?.id}
-                        showActivityBadge={hasRecentActivity(qa)}
-                      />
-                    ))}
-                  </div>
-                </>
-              ) : activeTag ? (
-                <div className="text-center py-10 text-muted-foreground space-y-2">
-                  <div className="text-4xl">🏷️</div>
-                  <p className="font-medium">&quot;{activeTag}&quot; 태그가 달린 길이 없습니다</p>
-                  <button onClick={() => setActiveTag(null)} className="text-xs text-primary hover:underline">
-                    전체 보기
-                  </button>
+                <div className="space-y-2">
+                  {trendingQAs.map((qa, i) => (
+                    <FeedCard
+                      key={qa.id}
+                      qa={qa}
+                      isNew={seedlingQAs.some(s => s.id === qa.id)}
+                      onClick={() => onSelectSharedQA(qa.id)}
+                      onCultivate={handleQuickCultivate}
+                      cultivatingId={cultivatingId}
+                      isLoggedIn={!!session?.user?.id}
+                    />
+                  ))}
                 </div>
               ) : (
                 <div className="text-center py-8 text-muted-foreground space-y-3">
@@ -550,36 +441,6 @@ export function Section1QuestionInput({ onNewQuestion, onSelectSharedQA, onAnswe
                         className="text-[10px] px-2 py-1 rounded-full border border-border text-muted-foreground hover:border-primary/50 hover:text-foreground transition-colors"
                       >
                         {example}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* ── 💡 추천 주제 + 🤖 지식 갭 (합쳐서 컴팩트하게) ── */}
-              {(aiGeneratedQs.length > 0 || aiQuestions.length > 0) && (
-                <div className="mt-4 pt-3 border-t">
-                  <div className="flex items-center gap-1.5 mb-2">
-                    <span className="text-xs">💡</span>
-                    <span className="text-[10px] text-muted-foreground">추천</span>
-                  </div>
-                  <div className="flex flex-wrap gap-1">
-                    {aiGeneratedQs.slice(0, 3).map((q) => (
-                      <button
-                        key={q.id}
-                        onClick={() => onSelectSharedQA(q.id)}
-                        className="text-[10px] px-2 py-0.5 rounded-full border border-muted-foreground/20 text-muted-foreground hover:border-primary/50 hover:text-foreground transition-colors"
-                      >
-                        {q.title?.slice(0, 20)}{q.title && q.title.length > 20 ? "…" : ""}
-                      </button>
-                    ))}
-                    {aiQuestions.slice(0, 2).map((gap) => (
-                      <button
-                        key={gap.id}
-                        onClick={() => onAnswerGap ? onAnswerGap(gap.id, gap.description) : setQuestion(gap.description)}
-                        className="text-[10px] px-2 py-0.5 rounded-full border border-dashed border-amber-300/50 dark:border-amber-700/50 text-amber-700 dark:text-amber-400 hover:border-amber-400 transition-colors"
-                      >
-                        🤖 {gap.description.slice(0, 20)}{gap.description.length > 20 ? "…" : ""}
                       </button>
                     ))}
                   </div>
@@ -727,6 +588,87 @@ function SearchResultItem({
         <span>{investorCount}명</span>
         {showActivityBadge && (
           <span className="px-1 py-0.5 rounded bg-orange-100 dark:bg-orange-950 text-orange-600 dark:text-orange-400 font-medium">활발</span>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ── Feed Card (Q→A→반응 통합 구조) ──
+function FeedCard({
+  qa,
+  isNew,
+  onClick,
+  onCultivate,
+  cultivatingId,
+  isLoggedIn,
+}: {
+  qa: QASetCardData & { opinionCount?: number };
+  isNew?: boolean;
+  onClick: () => void;
+  onCultivate?: (e: React.MouseEvent, qaSetId: string) => void;
+  cultivatingId?: string | null;
+  isLoggedIn?: boolean;
+}) {
+  const aiAnswer = qa.messages?.[0]?.content ?? null;
+  const userCorrection = qa.summary ?? null;
+  const isCultivating = cultivatingId === qa.id;
+  const totalInv = qa.totalInvested ?? 0;
+  const investorCount = qa.investorCount ?? 0;
+  const opinionCount = (qa as { opinionCount?: number }).opinionCount ?? 0;
+
+  return (
+    <div
+      className="group p-3 rounded-xl border bg-card hover:border-primary/30 transition-colors cursor-pointer"
+      onClick={onClick}
+    >
+      {/* 🆕 배지 (새로 열린 길) */}
+      {isNew && (
+        <div className="flex items-center gap-1 mb-1.5">
+          <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-green-100 dark:bg-green-950 text-green-700 dark:text-green-400 font-medium">🆕 NEW</span>
+        </div>
+      )}
+
+      {/* Q: 질문 */}
+      <div className="flex items-start gap-2 mb-2">
+        <span className="shrink-0 w-5 h-5 rounded-full bg-blue-100 dark:bg-blue-900/50 flex items-center justify-center text-[10px]">👤</span>
+        <p className="text-[13px] font-medium text-foreground leading-snug flex-1 line-clamp-2">
+          {qa.title ?? "제목 없음"}
+        </p>
+      </div>
+
+      {/* A: AI 답변 */}
+      {aiAnswer && (
+        <div className="flex items-start gap-2 mb-2">
+          <span className="shrink-0 w-5 h-5 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center text-[10px]">🤖</span>
+          <p className="text-[11px] text-muted-foreground leading-snug flex-1 line-clamp-2">{aiAnswer}</p>
+        </div>
+      )}
+
+      {/* ✏️ 수정 (빈틈 채우기) */}
+      {userCorrection && (
+        <div className="flex items-start gap-2 mb-2">
+          <span className="shrink-0 w-5 h-5 rounded-full bg-amber-100 dark:bg-amber-900/50 flex items-center justify-center text-[10px]">✏️</span>
+          <p className="text-[11px] text-amber-700 dark:text-amber-400 leading-snug flex-1 line-clamp-1">{userCorrection}</p>
+        </div>
+      )}
+
+      {/* 반응바 */}
+      <div className="flex items-center justify-between pt-2 border-t border-border/50">
+        <div className="flex items-center gap-3 text-[10px] text-muted-foreground">
+          <span title="의견">💬 {opinionCount}</span>
+          <span title="발자국">👣 {totalInv}</span>
+          <span title="참여자">👥 {investorCount}명</span>
+        </div>
+        {/* 걸어가기 버튼 */}
+        {isLoggedIn && onCultivate && (
+          <button
+            onClick={(e) => { e.stopPropagation(); onCultivate(e, qa.id); }}
+            disabled={isCultivating}
+            className="text-[10px] px-2.5 py-1 rounded-full border border-green-300 dark:border-green-700 text-green-700 dark:text-green-400 hover:bg-green-50 dark:hover:bg-green-950/30 transition-colors disabled:opacity-50"
+          >
+            {isCultivating ? <Loader2 className="h-3 w-3 animate-spin inline" /> : "👣 걸어가기"}
+          </button>
         )}
       </div>
     </div>
