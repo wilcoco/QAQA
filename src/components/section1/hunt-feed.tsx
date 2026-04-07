@@ -174,7 +174,7 @@ export function HuntFeed({ onSelectQASet, onAnswerGap, onNewQuestion }: HuntFeed
         <div className="text-center py-4">
           <h1 className="text-xl font-bold">🐾 AI 빈틈 사냥</h1>
           <p className="text-sm text-muted-foreground mt-1">
-            AI가 대답 못할 만한 질문에 도전하고, 빈틈을 채워 발자국을 얻으세요
+            AI가 잘 모르는 분야에서 내 경험과 지식으로 빈틈을 채우세요
           </p>
         </div>
 
@@ -184,7 +184,7 @@ export function HuntFeed({ onSelectQASet, onAnswerGap, onNewQuestion }: HuntFeed
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
-                placeholder="AI가 틀릴 만한 질문을 해보세요..."
+                placeholder="AI보다 내가 더 잘 아는 주제로 질문해보세요"
                 value={questionInput}
                 onChange={(e) => setQuestionInput(e.target.value)}
                 onKeyDown={(e) => {
@@ -205,7 +205,7 @@ export function HuntFeed({ onSelectQASet, onAnswerGap, onNewQuestion }: HuntFeed
             </Button>
           </div>
           <p className="text-[11px] text-muted-foreground mt-1.5 text-center">
-            AI가 틀리면 발자국 보상 · 맞아도 지식이 됩니다
+            내 경험과 전문성으로 AI의 빈틈을 채우세요
           </p>
         </div>
 
