@@ -238,9 +238,18 @@ export function Section1QuestionInput({ onNewQuestion, onSelectSharedQA, onAnswe
   return (
     <div className="flex flex-col h-full overflow-hidden relative pb-14 md:pb-0">
 
-      {/* ── Header: Search bar (컴팩트) ── */}
-      <div className={`shrink-0 border-b bg-muted/20 transition-all duration-300 ${search ? "px-4 py-2" : "px-4 py-4"}`}>
+      {/* ── Header: 타이틀 + Search bar ── */}
+      <div className={`shrink-0 border-b bg-muted/20 transition-all duration-300 ${search ? "px-4 py-2" : "px-4 py-3"}`}>
         <div className="max-w-2xl mx-auto">
+          {/* 타이틀 */}
+          {!search && (
+            <div className="text-center py-2">
+              <h1 className="text-xl font-bold">👣 발자국 따라가기</h1>
+              <p className="text-xs text-muted-foreground mt-1">
+                먼저 간 사람의 검증된 답변을 따라가거나, 새 길을 만드세요
+              </p>
+            </div>
+          )}
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none z-10" />
             <Input
