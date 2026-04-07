@@ -8,11 +8,12 @@ import { Section2Workspace } from "@/components/section2/qa-workspace";
 // import { NavigableKnowledgeMap } from "@/components/section5/navigable-knowledge-map"; // 지도 기능 임시 비활성화
 import { MyDashboard } from "@/components/section4/my-dashboard";
 import { AnswerGaps } from "@/components/section4/answer-gaps";
+import { HuntFeed } from "@/components/section1/hunt-feed";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import type { QASetWithMessages } from "@/types/qa-set";
 
-type ActiveTab = "home" | "profile";
+type ActiveTab = "home" | "hunt" | "profile";
 
 export default function HomePage() {
   const { data: session, status, update: updateSession } = useSession();
@@ -170,6 +171,7 @@ export default function HomePage() {
 
   const tabs: { key: ActiveTab; label: string; icon: string }[] = [
     { key: "home", label: "길", icon: "👣" },
+    { key: "hunt", label: "사냥", icon: "🐾" },
     { key: "profile", label: "나", icon: "👤" },
   ];
 
@@ -227,6 +229,14 @@ export default function HomePage() {
               </div>
             )}
           </div>
+        </div>
+
+        {/* 🎯 사냥: AI가 못 대답할 만한 질문 도전 */}
+        <div className={activeTab === "hunt" ? "block h-full overflow-y-auto" : "hidden"}>
+          <HuntFeed
+            onSelectQASet={handleSelectSharedQA}
+            onAnswerGap={handleAnswerGap}
+          />
         </div>
 
         {/* 👤 나: 대시보드 + 기여 요청(AI→인간 갭) */}

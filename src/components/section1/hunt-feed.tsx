@@ -1,0 +1,289 @@
+"use client";
+
+import { useState, useEffect, useCallback } from "react";
+import { useSession } from "next-auth/react";
+import { Button } from "@/components/ui/button";
+import { Loader2 } from "lucide-react";
+
+interface HuntItem {
+  id: string;
+  title: string | null;
+  question?: string;
+  description?: string;
+  type: "ai_question" | "knowledge_gap" | "human_challenge";
+  rewardMultiplier?: number;
+  answerCount?: number;
+  gapType?: string;
+  severity?: string;
+  creator?: {
+    id: string;
+    name: string | null;
+    image: string | null;
+  };
+  totalInvested?: number;
+  investorCount?: number;
+  aiAnswer?: string | null;
+  humanCorrection?: string | null;
+}
+
+interface HuntFeedProps {
+  onSelectQASet: (qaSetId: string) => void;
+  onAnswerGap: (gapId: string, description: string) => void;
+}
+
+const GAP_TYPE_INFO: Record<string, { icon: string; label: string }> = {
+  uncertain_answer: { icon: "❓", label: "불확실한 답변" },
+  inconsistency: { icon: "⚡", label: "불일치" },
+  missing_evidence: { icon: "📎", label: "근거 부족" },
+  conflicting_claims: { icon: "⚔️", label: "의견 충돌" },
+  ai_doesnt_know: { icon: "🤷", label: "AI가 모름" },
+  local_info: { icon: "📍", label: "지역 정보" },
+  experience: { icon: "💡", label: "경험 필요" },
+};
+
+export function HuntFeed({ onSelectQASet, onAnswerGap }: HuntFeedProps) {
+  const { data: session } = useSession();
+  const [items, setItems] = useState<HuntItem[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [startingHunt, setStartingHunt] = useState<string | null>(null);
+
+  const fetchHuntItems = useCallback(async () => {
+    setLoading(true);
+    try {
+      // AI 질문 + 지식 갭 + 사람 도전 병렬 로드
+      const [aiQuestionsRes, gapsRes, challengesRes] = await Promise.all([
+        fetch("/api/qa-sets/ai-questions?limit=10"),
+        fetch("/api/knowledge-gaps?limit=10"),
+        fetch("/api/qa-sets?shared=true&sort=recent&limit=10&hunt=true"),
+      ]);
+
+      const combined: HuntItem[] = [];
+
+      // AI 질문
+      if (aiQuestionsRes.ok) {
+        const data = await aiQuestionsRes.json();
+        (data.questions ?? []).forEach((q: any) => {
+          combined.push({
+            id: q.id,
+            title: q.title,
+            question: q.question,
+            type: "ai_question",
+            rewardMultiplier: q.rewardMultiplier,
+            answerCount: q.answerCount,
+          });
+        });
+      }
+
+      // 지식 갭
+      if (gapsRes.ok) {
+        const data = await gapsRes.json();
+        (data.gaps ?? []).forEach((g: any) => {
+          combined.push({
+            id: g.id,
+            title: g.description,
+            description: g.description,
+            type: "knowledge_gap",
+            gapType: g.gapType,
+            severity: g.severity,
+          });
+        });
+      }
+
+      // 사람 도전 (AI가 잘 못 대답한 것들)
+      if (challengesRes.ok) {
+        const data = await challengesRes.json();
+        (data.qaSets ?? []).filter((qa: any) => qa.summary).forEach((qa: any) => {
+          combined.push({
+            id: qa.id,
+            title: qa.title,
+            type: "human_challenge",
+            creator: qa.creator,
+            totalInvested: qa.totalInvested,
+            investorCount: qa.investorCount,
+            aiAnswer: qa.messages?.[0]?.content,
+            humanCorrection: qa.summary,
+          });
+        });
+      }
+
+      // 섞어서 표시
+      combined.sort(() => Math.random() - 0.5);
+      setItems(combined);
+    } catch (err) {
+      console.error("Failed to load hunt items:", err);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchHuntItems();
+  }, [fetchHuntItems]);
+
+  const handleStartHunt = async (item: HuntItem) => {
+    if (!session?.user?.id) return;
+    setStartingHunt(item.id);
+
+    try {
+      if (item.type === "ai_question") {
+        onSelectQASet(item.id);
+      } else if (item.type === "knowledge_gap") {
+        onAnswerGap(item.id, item.description ?? item.title ?? "");
+      } else {
+        onSelectQASet(item.id);
+      }
+    } finally {
+      setStartingHunt(null);
+    }
+  };
+
+  if (!session?.user?.id) {
+    return (
+      <div className="h-full flex items-center justify-center text-muted-foreground p-6">
+        <div className="text-center space-y-3">
+          <div className="text-4xl">🐾</div>
+          <p>로그인하고 AI 빈틈 사냥에 도전하세요</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (loading) {
+    return (
+      <div className="p-6 space-y-3 max-w-2xl mx-auto">
+        {Array.from({ length: 5 }).map((_, i) => (
+          <div key={i} className="h-24 rounded-xl bg-muted animate-pulse" />
+        ))}
+      </div>
+    );
+  }
+
+  return (
+    <div className="h-full overflow-y-auto">
+      <div className="max-w-2xl mx-auto p-4 space-y-4 pb-20">
+        {/* 헤더 */}
+        <div className="text-center py-4">
+          <h1 className="text-xl font-bold">🐾 AI 빈틈 사냥</h1>
+          <p className="text-sm text-muted-foreground mt-1">
+            AI가 대답 못할 만한 질문에 도전하고, 빈틈을 채워 발자국을 얻으세요
+          </p>
+        </div>
+
+        {/* 사냥 아이템 목록 */}
+        {items.length > 0 ? (
+          <div className="space-y-3">
+            {items.map((item) => (
+              <HuntCard
+                key={`${item.type}-${item.id}`}
+                item={item}
+                onStart={() => handleStartHunt(item)}
+                isStarting={startingHunt === item.id}
+              />
+            ))}
+          </div>
+        ) : (
+          <div className="text-center py-10 text-muted-foreground">
+            <div className="text-4xl mb-3">🏜️</div>
+            <p>현재 도전할 수 있는 사냥감이 없습니다</p>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function HuntCard({
+  item,
+  onStart,
+  isStarting,
+}: {
+  item: HuntItem;
+  onStart: () => void;
+  isStarting: boolean;
+}) {
+  const gapInfo = item.gapType ? GAP_TYPE_INFO[item.gapType] : null;
+
+  return (
+    <div className="p-4 rounded-xl border bg-card hover:border-primary/30 transition-colors">
+      {/* 타입 배지 */}
+      <div className="flex items-center gap-2 mb-2">
+        {item.type === "ai_question" && (
+          <span className="text-[10px] px-2 py-0.5 rounded-full bg-purple-100 dark:bg-purple-950 text-purple-700 dark:text-purple-400 font-medium">
+            🤖 AI가 묻는 질문
+          </span>
+        )}
+        {item.type === "knowledge_gap" && (
+          <span className="text-[10px] px-2 py-0.5 rounded-full bg-amber-100 dark:bg-amber-950 text-amber-700 dark:text-amber-400 font-medium">
+            {gapInfo?.icon ?? "❓"} {gapInfo?.label ?? "지식 갭"}
+          </span>
+        )}
+        {item.type === "human_challenge" && (
+          <span className="text-[10px] px-2 py-0.5 rounded-full bg-green-100 dark:bg-green-950 text-green-700 dark:text-green-400 font-medium">
+            ✏️ 빈틈 채워짐
+          </span>
+        )}
+        {item.rewardMultiplier && item.rewardMultiplier > 1 && (
+          <span className="text-[10px] px-2 py-0.5 rounded-full bg-red-100 dark:bg-red-950 text-red-700 dark:text-red-400 font-medium">
+            🔥 x{item.rewardMultiplier} 보상
+          </span>
+        )}
+      </div>
+
+      {/* 질문 */}
+      <div className="flex items-start gap-2 mb-2">
+        <span className="shrink-0 w-5 h-5 rounded-full bg-blue-100 dark:bg-blue-900/50 flex items-center justify-center text-[10px]">
+          {item.type === "ai_question" ? "🤖" : "👤"}
+        </span>
+        <p className="text-[13px] font-medium leading-snug line-clamp-2">
+          {item.title ?? item.description ?? "제목 없음"}
+        </p>
+      </div>
+
+      {/* AI 답변 (있으면) */}
+      {item.aiAnswer && (
+        <div className="flex items-start gap-2 mb-2">
+          <span className="shrink-0 w-5 h-5 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center text-[10px]">🤖</span>
+          <p className="text-[11px] text-muted-foreground line-clamp-1">{item.aiAnswer}</p>
+        </div>
+      )}
+
+      {/* 사람 수정 (있으면) */}
+      {item.humanCorrection && (
+        <div className="flex items-start gap-2 mb-2">
+          <span className="shrink-0 w-5 h-5 rounded-full bg-amber-100 dark:bg-amber-900/50 flex items-center justify-center text-[10px]">✏️</span>
+          <p className="text-[11px] text-amber-700 dark:text-amber-400 line-clamp-1">{item.humanCorrection}</p>
+        </div>
+      )}
+
+      {/* 하단: 메타 + 버튼 */}
+      <div className="flex items-center justify-between pt-2 border-t border-border/50 mt-2">
+        <div className="flex items-center gap-3 text-[10px] text-muted-foreground">
+          {item.answerCount !== undefined && (
+            <span>{item.answerCount}명 도전</span>
+          )}
+          {item.investorCount !== undefined && item.investorCount > 0 && (
+            <span>👣 {item.totalInvested}</span>
+          )}
+          {item.creator && (
+            <span>by {item.creator.name ?? "익명"}</span>
+          )}
+        </div>
+        <Button
+          size="sm"
+          variant={item.type === "human_challenge" ? "outline" : "default"}
+          className="text-xs h-7 px-3"
+          onClick={onStart}
+          disabled={isStarting}
+        >
+          {isStarting ? (
+            <Loader2 className="h-3 w-3 animate-spin" />
+          ) : item.type === "human_challenge" ? (
+            "보기"
+          ) : (
+            "🐾 도전"
+          )}
+        </Button>
+      </div>
+    </div>
+  );
+}
