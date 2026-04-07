@@ -15,7 +15,8 @@ import { UNINVEST_WINDOW_HOURS } from "@/lib/engine/uninvestment";
 import { ParentComparePanel } from "./parent-compare-panel";
 import { InvestorComments } from "./investor-comments";
 import { ReviewGuide } from "./review-guide";
-import { ArrowLeft } from "lucide-react";
+import { BlockView } from "./block-view";
+import { ArrowLeft, LayoutGrid, List } from "lucide-react";
 
 interface Section2Props {
   qaSet: QASetWithMessages | null;
@@ -51,6 +52,7 @@ export function Section2Workspace({
   const [showReviewPanel, setShowReviewPanel] = useState(false);
   const [dismissedShareHint, setDismissedShareHint] = useState(false);
   const [dismissedRecommendHint, setDismissedRecommendHint] = useState(false);
+  const [viewMode, setViewMode] = useState<"list" | "block">("block"); // 기본 블록 뷰
   const scrollRef = useRef<HTMLDivElement>(null);
   const sentRef = useRef<string | null>(null);
 
@@ -219,6 +221,33 @@ export function Section2Workspace({
     }
   };
 
+  // 블록 추가 핸들러
+  const handleAddBlock = async (afterMessageId: string | null, blockType: string, content: string) => {
+    if (!session?.user?.id) return;
+
+    try {
+      // 의견으로 저장 (기존 opinions API 활용)
+      const res = await fetch("/api/opinions", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          qaSetId: qaSet.id,
+          messageId: afterMessageId, // 어떤 메시지 뒤에 달리는지
+          content,
+          gapType: blockType, // opinion, question, correction, evidence
+        }),
+      });
+
+      if (res.ok) {
+        // QASet 새로고침
+        const refreshRes = await fetch(`/api/qa-sets/${qaSet.id}`);
+        if (refreshRes.ok) onQASetUpdated(await refreshRes.json());
+      }
+    } catch (err) {
+      console.error("Failed to add block:", err);
+    }
+  };
+
   return (
     <div className="h-full flex flex-col overflow-hidden pb-14 md:pb-0">
       {/* Header — always clean, action buttons inline */}
@@ -251,7 +280,25 @@ export function Section2Workspace({
           </div>
         </div>
 
-        <div className="flex gap-2 shrink-0">
+        <div className="flex gap-2 shrink-0 items-center">
+          {/* View mode toggle */}
+          <div className="flex items-center border rounded-lg overflow-hidden">
+            <button
+              onClick={() => setViewMode("block")}
+              className={`p-1.5 transition-colors ${viewMode === "block" ? "bg-primary text-primary-foreground" : "hover:bg-muted"}`}
+              title="블록 뷰"
+            >
+              <LayoutGrid className="h-3.5 w-3.5" />
+            </button>
+            <button
+              onClick={() => setViewMode("list")}
+              className={`p-1.5 transition-colors ${viewMode === "list" ? "bg-primary text-primary-foreground" : "hover:bg-muted"}`}
+              title="리스트 뷰"
+            >
+              <List className="h-3.5 w-3.5" />
+            </button>
+          </div>
+
           {qaSet.parentQASetId && (
             <Button variant="ghost" size="sm" onClick={() => setShowParentCompare(true)} className="text-xs">
               원본과 비교
@@ -371,30 +418,45 @@ export function Section2Workspace({
       {/* Messages */}
       <div ref={scrollRef} className="flex-1 overflow-y-auto min-h-0">
         <div className="max-w-3xl mx-auto p-4 space-y-4">
-          {messages.map((message, idx) => (
-            <div key={message.id}>
-              {qaSet.parentMessageCount > 0 && idx === qaSet.parentMessageCount && (
-                <div className="flex items-center gap-3 py-2 my-2">
-                  <div className="flex-1 border-t border-dashed border-teal-300 dark:border-teal-700" />
-                  <div className="shrink-0 text-xs text-teal-600 dark:text-teal-400 bg-teal-50 dark:bg-teal-950/40 px-3 py-1 rounded-full border border-teal-200 dark:border-teal-800">
-                    ↑ 원래 대화 · <span className="font-medium">↓ 여기서부터 내 대화</span>
+          {/* 블록 뷰 */}
+          {viewMode === "block" ? (
+            <BlockView
+              messages={messages}
+              qaSetId={qaSet.id}
+              isOwner={isOwner}
+              isShared={qaSet.isShared}
+              userId={session?.user?.id}
+              userBalance={session?.user?.balance}
+              onAddBlock={handleAddBlock}
+              onInvest={(messageId) => setShowInvestDialog(true)}
+            />
+          ) : (
+            /* 기존 리스트 뷰 */
+            messages.map((message, idx) => (
+              <div key={message.id}>
+                {qaSet.parentMessageCount > 0 && idx === qaSet.parentMessageCount && (
+                  <div className="flex items-center gap-3 py-2 my-2">
+                    <div className="flex-1 border-t border-dashed border-teal-300 dark:border-teal-700" />
+                    <div className="shrink-0 text-xs text-teal-600 dark:text-teal-400 bg-teal-50 dark:bg-teal-950/40 px-3 py-1 rounded-full border border-teal-200 dark:border-teal-800">
+                      ↑ 원래 대화 · <span className="font-medium">↓ 여기서부터 내 대화</span>
+                    </div>
+                    <div className="flex-1 border-t border-dashed border-teal-300 dark:border-teal-700" />
                   </div>
-                  <div className="flex-1 border-t border-dashed border-teal-300 dark:border-teal-700" />
-                </div>
-              )}
-              <MessageCard
-                message={message}
-                isOwner={isOwner}
-                qaSetId={qaSet.id}
-                creatorName={qaSet.creator?.name}
-                isShared={qaSet.isShared}
-                onMessageImproved={async () => {
-                  const res = await fetch(`/api/qa-sets/${qaSet.id}`);
-                  if (res.ok) onQASetUpdated(await res.json());
-                }}
-              />
-            </div>
-          ))}
+                )}
+                <MessageCard
+                  message={message}
+                  isOwner={isOwner}
+                  qaSetId={qaSet.id}
+                  creatorName={qaSet.creator?.name}
+                  isShared={qaSet.isShared}
+                  onMessageImproved={async () => {
+                    const res = await fetch(`/api/qa-sets/${qaSet.id}`);
+                    if (res.ok) onQASetUpdated(await res.json());
+                  }}
+                />
+              </div>
+            ))
+          )}
 
           {/* Streaming user message */}
           {isStreaming && pendingUserMessage && (
