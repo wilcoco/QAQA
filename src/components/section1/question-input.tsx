@@ -245,7 +245,7 @@ export function Section1QuestionInput({ onNewQuestion, onSelectSharedQA, onAnswe
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none z-10" />
             <Input
               ref={inputRef}
-              placeholder="AI 답변 검색..."
+              placeholder="이전 발자국 검색..."
               value={question}
               onChange={(e) => {
                 setQuestion(e.target.value);
@@ -320,8 +320,11 @@ export function Section1QuestionInput({ onNewQuestion, onSelectSharedQA, onAnswe
                     <Pagination search={search} onPage={handlePage} />
                   )}
 
-                  {/* 검색 결과 하단: 새 길 만들기 (컴팩트) */}
-                  <div className="mt-4 pt-3 border-t text-center">
+                  {/* 검색 결과 하단: 새 발자국 만들기 */}
+                  <div className="mt-4 pt-3 border-t text-center space-y-2">
+                    <p className="text-xs text-muted-foreground">
+                      기존 발자국이 충분치 않으면, 직접 AI와 대화를 시작해 새로운 발자국을 만드세요
+                    </p>
                     <Button
                       onClick={handleAskAI}
                       disabled={isSubmitting}
@@ -329,8 +332,8 @@ export function Section1QuestionInput({ onNewQuestion, onSelectSharedQA, onAnswe
                       size="sm"
                       className="gap-1.5 text-xs"
                     >
-                      {isSubmitting ? <Loader2 className="h-3 w-3 animate-spin" /> : "🏔️"}
-                      새 길 만들기
+                      {isSubmitting ? <Loader2 className="h-3 w-3 animate-spin" /> : "👣"}
+                      새 발자국 만들기
                     </Button>
                   </div>
                 </>
