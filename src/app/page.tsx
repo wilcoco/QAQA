@@ -236,6 +236,7 @@ export default function HomePage() {
           <HuntFeed
             onSelectQASet={handleSelectSharedQA}
             onAnswerGap={handleAnswerGap}
+            onNewQuestion={(q) => { handleNewQuestion(q); setActiveTab("home"); }}
           />
         </div>
 

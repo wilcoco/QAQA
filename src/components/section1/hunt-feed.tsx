@@ -3,7 +3,8 @@
 import { useState, useEffect, useCallback } from "react";
 import { useSession } from "next-auth/react";
 import { Button } from "@/components/ui/button";
-import { Loader2 } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Loader2, Search } from "lucide-react";
 
 interface HuntItem {
   id: string;
@@ -29,6 +30,7 @@ interface HuntItem {
 interface HuntFeedProps {
   onSelectQASet: (qaSetId: string) => void;
   onAnswerGap: (gapId: string, description: string) => void;
+  onNewQuestion: (question: string) => void;
 }
 
 const GAP_TYPE_INFO: Record<string, { icon: string; label: string }> = {
@@ -41,11 +43,18 @@ const GAP_TYPE_INFO: Record<string, { icon: string; label: string }> = {
   experience: { icon: "💡", label: "경험 필요" },
 };
 
-export function HuntFeed({ onSelectQASet, onAnswerGap }: HuntFeedProps) {
+export function HuntFeed({ onSelectQASet, onAnswerGap, onNewQuestion }: HuntFeedProps) {
   const { data: session } = useSession();
   const [items, setItems] = useState<HuntItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [startingHunt, setStartingHunt] = useState<string | null>(null);
+  const [questionInput, setQuestionInput] = useState("");
+
+  const handleSubmitQuestion = () => {
+    if (!questionInput.trim()) return;
+    onNewQuestion(questionInput.trim());
+    setQuestionInput("");
+  };
 
   const fetchHuntItems = useCallback(async () => {
     setLoading(true);
@@ -166,6 +175,37 @@ export function HuntFeed({ onSelectQASet, onAnswerGap }: HuntFeedProps) {
           <h1 className="text-xl font-bold">🐾 AI 빈틈 사냥</h1>
           <p className="text-sm text-muted-foreground mt-1">
             AI가 대답 못할 만한 질문에 도전하고, 빈틈을 채워 발자국을 얻으세요
+          </p>
+        </div>
+
+        {/* 질문 입력 */}
+        <div className="relative">
+          <div className="flex gap-2">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="AI가 틀릴 만한 질문을 해보세요..."
+                value={questionInput}
+                onChange={(e) => setQuestionInput(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && !e.shiftKey) {
+                    e.preventDefault();
+                    handleSubmitQuestion();
+                  }
+                }}
+                className="pl-9 h-11"
+              />
+            </div>
+            <Button
+              onClick={handleSubmitQuestion}
+              disabled={!questionInput.trim()}
+              className="h-11 px-4"
+            >
+              🐾 도전
+            </Button>
+          </div>
+          <p className="text-[11px] text-muted-foreground mt-1.5 text-center">
+            AI가 틀리면 발자국 보상 · 맞아도 지식이 됩니다
           </p>
         </div>
 
