@@ -37,7 +37,7 @@ interface ProfileData {
       totalInvested: number;
       investorCount: number;
       isAIGenerated: boolean;
-    };
+    } | null;
   }>;
   recentQASets: Array<{
     id: string;
@@ -64,7 +64,7 @@ interface ProfileData {
       totalInvested: number;
       negativeInvested: number;
       authorityScore: number;
-    };
+    } | null;
   }>;
   rewardHistory: Array<{
     id: string;
@@ -273,17 +273,17 @@ export function MyDashboard({ onSelectQASet, onGoToSearch, onGoToAnswer }: MyDas
         <div className="space-y-3">
           <h2 className="text-lg font-semibold">내가 걸어간 길</h2>
           <div className="grid gap-3">
-            {recentInvestments.filter(inv => inv.isPositive).map((inv, idx) => {
-              const { earned, roi } = getInvestmentROI(inv.qaSet.id, inv.amount);
+            {recentInvestments.filter(inv => inv.isPositive && inv.qaSet).map((inv, idx) => {
+              const { earned, roi } = getInvestmentROI(inv.qaSet!.id, inv.amount);
               return (
                 <Card
                   key={inv.id}
                   className="cursor-pointer hover:bg-accent/50 transition-colors"
-                  onClick={() => onSelectQASet(inv.qaSet.id)}
+                  onClick={() => onSelectQASet(inv.qaSet!.id)}
                 >
                   <CardContent className="py-4 flex items-center justify-between gap-4">
                     <div className="min-w-0 flex-1">
-                      <div className="font-medium truncate mb-1">{inv.qaSet.title || "제목 없음"}</div>
+                      <div className="font-medium truncate mb-1">{inv.qaSet!.title || "제목 없음"}</div>
                       <div className="flex items-center gap-3 text-xs text-muted-foreground">
                         <span>👣 {inv.amount} 발자국</span>
                         {earned > 0 && <span className="text-green-600">+{earned} 받음</span>}
@@ -333,18 +333,18 @@ export function MyDashboard({ onSelectQASet, onGoToSearch, onGoToAnswer }: MyDas
             )}
           </div>
           <div className="grid gap-3">
-            {profile.myAnswers.map((answer) => (
+            {profile.myAnswers.filter(a => a.qaSet).map((answer) => (
               <Card
                 key={answer.id}
                 className="cursor-pointer hover:bg-accent/50 transition-colors"
-                onClick={() => onSelectQASet(answer.qaSet.id)}
+                onClick={() => onSelectQASet(answer.qaSet!.id)}
               >
                 <CardContent className="py-4">
                   <div className="flex items-start gap-3">
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-1">
-                        <span className="font-medium truncate">{answer.qaSet.title || "제목 없음"}</span>
-                        {answer.qaSet.isAIGenerated && (
+                        <span className="font-medium truncate">{answer.qaSet!.title || "제목 없음"}</span>
+                        {answer.qaSet!.isAIGenerated && (
                           <Badge variant="outline" className="shrink-0 text-xs border-purple-300 text-purple-600">
                             🤖 AI 질문
                           </Badge>
@@ -354,13 +354,13 @@ export function MyDashboard({ onSelectQASet, onGoToSearch, onGoToAnswer }: MyDas
                         {answer.content.slice(0, 100)}...
                       </p>
                       <div className="flex items-center gap-3 mt-2 text-xs text-muted-foreground">
-                        {answer.qaSet.viewCount > 0 && (
+                        {answer.qaSet!.viewCount > 0 && (
                           <span className="text-green-600 font-medium">
-                            👀 {answer.qaSet.viewCount}명이 봄
+                            👀 {answer.qaSet!.viewCount}명이 봄
                           </span>
                         )}
-                        {answer.qaSet.investorCount > 0 && (
-                          <span>👣 {answer.qaSet.investorCount}명이 걸어감</span>
+                        {answer.qaSet!.investorCount > 0 && (
+                          <span>👣 {answer.qaSet!.investorCount}명이 걸어감</span>
                         )}
                         <span>{new Date(answer.createdAt).toLocaleDateString("ko-KR")}</span>
                       </div>
