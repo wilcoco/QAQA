@@ -3,13 +3,14 @@ import { prisma } from "@/lib/prisma";
 import { grantPioneerReward } from "@/lib/engine/footprint-rewards";
 import { NextRequest, NextResponse } from "next/server";
 
-// GET /api/qa-sets - List Q&A sets
+// GET /api/qa-sets - List Q&A sets (개인화 피드 지원)
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
   const shared = searchParams.get("shared") === "true";
   const sort = searchParams.get("sort") || "recent";
   const limit = parseInt(searchParams.get("limit") || "20");
   const page = parseInt(searchParams.get("page") || "1");
+  const personalized = searchParams.get("personalized") !== "false"; // 기본 true
 
   const session = await auth();
 
@@ -30,10 +31,22 @@ export async function GET(req: NextRequest) {
       ? { investorCount: "desc" as const }
       : { createdAt: "desc" as const };
 
+  // 사용자 관심 클러스터 가져오기 (개인화용)
+  let userClusterIds: string[] = [];
+  if (session?.user?.id && personalized) {
+    const contributions = await prisma.userTopicContribution.findMany({
+      where: { userId: session.user.id },
+      orderBy: { topicAuthority: "desc" },
+      take: 5, // 상위 5개 관심 클러스터
+      select: { topicClusterId: true },
+    });
+    userClusterIds = contributions.map(c => c.topicClusterId);
+  }
+
   const qaSets = await prisma.qASet.findMany({
     where,
     orderBy,
-    take: limit,
+    take: limit * 2, // 개인화 정렬 위해 더 가져옴
     skip: (page - 1) * limit,
     include: {
       creator: {
@@ -62,10 +75,24 @@ export async function GET(req: NextRequest) {
   });
   const opinionCountMap = new Map(opinionCounts.map(c => [c.targetQASetId, c._count]));
 
-  const enrichedQASets = qaSets.map(qa => ({
+  let enrichedQASets = qaSets.map(qa => ({
     ...qa,
     opinionCount: opinionCountMap.get(qa.id) ?? 0,
+    isPersonalized: userClusterIds.includes(qa.topicClusterId ?? ""),
   }));
+
+  // 개인화 정렬: 관심 클러스터 Q&A 우선
+  if (userClusterIds.length > 0 && personalized) {
+    enrichedQASets.sort((a, b) => {
+      const aMatch = a.isPersonalized ? 1 : 0;
+      const bMatch = b.isPersonalized ? 1 : 0;
+      if (aMatch !== bMatch) return bMatch - aMatch; // 관심 클러스터 우선
+      return 0; // 나머지는 기존 정렬 유지
+    });
+  }
+
+  // limit 적용
+  enrichedQASets = enrichedQASets.slice(0, limit);
 
   return NextResponse.json({ qaSets: enrichedQASets });
 }

@@ -114,6 +114,7 @@ interface LoadedQASet {
   creatorId: string;
   parentQASetId: string | null;
   parentMessageCount: number;
+  topicClusterId: string | null;  // 개인화 피드용
   version: number;
   qualityPool: number;
   investorCount: number;
@@ -865,9 +866,35 @@ export async function processInvestment(input: InvestmentInput): Promise<Investm
   const { user, qaSet } = await loadEntities(input.userId, input.qaSetId);
   await validateInvestment(input, user, qaSet);
 
-  if (input.isNegative) {
-    return processNegativeInvestment(input, user, qaSet);
-  } else {
-    return processPositiveInvestment(input, user, qaSet);
+  const result = input.isNegative
+    ? await processNegativeInvestment(input, user, qaSet)
+    : await processPositiveInvestment(input, user, qaSet);
+
+  // 관심 클러스터 업데이트 (개인화 피드용)
+  if (qaSet.topicClusterId) {
+    updateUserTopicContribution(input.userId, qaSet.topicClusterId, input.amount).catch(() => {});
   }
+
+  return result;
+}
+
+/**
+ * 사용자의 토픽 클러스터 기여도 업데이트 (개인화 피드용)
+ */
+async function updateUserTopicContribution(userId: string, topicClusterId: string, investAmount: number) {
+  await prisma.userTopicContribution.upsert({
+    where: {
+      userId_topicClusterId: { userId, topicClusterId },
+    },
+    create: {
+      userId,
+      topicClusterId,
+      topicAuthority: Math.log10(investAmount + 1),
+      lastContributedAt: new Date(),
+    },
+    update: {
+      topicAuthority: { increment: Math.log10(investAmount + 1) * 0.1 },
+      lastContributedAt: new Date(),
+    },
+  });
 }
