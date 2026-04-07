@@ -171,45 +171,11 @@ export function HuntFeed({ onSelectQASet, onAnswerGap, onNewQuestion }: HuntFeed
     <div className="h-full overflow-y-auto">
       <div className="max-w-2xl mx-auto p-4 space-y-4 pb-20">
         {/* 헤더 */}
-        <div className="text-center py-4">
+        <div className="text-center py-2">
           <h1 className="text-xl font-bold">🐾 AI 빈틈 사냥</h1>
-          <p className="text-sm text-muted-foreground mt-1">
-            AI가 잘 모르는 분야에서 내 경험과 지식으로 빈틈을 채우세요
-          </p>
         </div>
 
-        {/* 질문 입력 */}
-        <div className="relative">
-          <div className="flex gap-2">
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="AI보다 내가 더 잘 아는 주제로 질문해보세요"
-                value={questionInput}
-                onChange={(e) => setQuestionInput(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" && !e.shiftKey) {
-                    e.preventDefault();
-                    handleSubmitQuestion();
-                  }
-                }}
-                className="pl-9 h-11"
-              />
-            </div>
-            <Button
-              onClick={handleSubmitQuestion}
-              disabled={!questionInput.trim()}
-              className="h-11 px-4"
-            >
-              🐾 도전
-            </Button>
-          </div>
-          <p className="text-[11px] text-muted-foreground mt-1.5 text-center">
-            내 경험과 전문성으로 AI의 빈틈을 채우세요
-          </p>
-        </div>
-
-        {/* 사냥 아이템 목록 */}
+        {/* 사냥 아이템 목록 (다른 사람들의 사냥) */}
         {items.length > 0 ? (
           <div className="space-y-3">
             {items.map((item) => (
@@ -222,11 +188,42 @@ export function HuntFeed({ onSelectQASet, onAnswerGap, onNewQuestion }: HuntFeed
             ))}
           </div>
         ) : (
-          <div className="text-center py-10 text-muted-foreground">
-            <div className="text-4xl mb-3">🏜️</div>
-            <p>현재 도전할 수 있는 사냥감이 없습니다</p>
+          <div className="text-center py-6 text-muted-foreground">
+            <div className="text-3xl mb-2">🏜️</div>
+            <p className="text-sm">아직 사냥감이 없습니다</p>
           </div>
         )}
+
+        {/* 내가 도전하기 — 하단 */}
+        <div className="relative mt-6 p-4 rounded-xl border-2 border-dashed border-primary/30 bg-primary/5">
+          <p className="text-sm font-medium text-center mb-3">
+            🐾 AI보다 내가 더 잘 아는 주제가 있다면?
+          </p>
+          <div className="flex gap-2">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="내 경험과 전문성으로 질문하기"
+                value={questionInput}
+                onChange={(e) => setQuestionInput(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && !e.shiftKey) {
+                    e.preventDefault();
+                    handleSubmitQuestion();
+                  }
+                }}
+                className="pl-9 h-11 bg-background"
+              />
+            </div>
+            <Button
+              onClick={handleSubmitQuestion}
+              disabled={!questionInput.trim()}
+              className="h-11 px-4"
+            >
+              도전
+            </Button>
+          </div>
+        </div>
       </div>
     </div>
   );
