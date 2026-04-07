@@ -729,12 +729,7 @@ export function ReviewGuide({
             </div>
           </div>
 
-          {/* 추가 질문 */}
-          <FollowUpInput
-            followUpText={followUpText}
-            setFollowUpText={setFollowUpText}
-            onSend={handleSendFollowUp}
-          />
+          {/* 추가 질문 — 오너는 하단 입력창 사용 */}
         </div>
       </div>
     );
@@ -801,12 +796,7 @@ export function ReviewGuide({
             onRefresh={onOpinionSubmitted}
           />
 
-          {/* 추가 질문 */}
-          <FollowUpInput
-            followUpText={followUpText}
-            setFollowUpText={setFollowUpText}
-            onSend={handleSendFollowUp}
-          />
+          {/* 추가 질문 — 오너는 하단 입력창 사용 */}
         </div>
       </div>
     );
@@ -921,12 +911,14 @@ export function ReviewGuide({
           onRefresh={onOpinionSubmitted}
         />
 
-        {/* 추가 질문 */}
-        <FollowUpInput
-          followUpText={followUpText}
-          setFollowUpText={setFollowUpText}
-          onSend={handleSendFollowUp}
-        />
+        {/* 추가 질문 — 오너는 하단 입력창 사용, 방문자만 여기서 */}
+        {!isOwner && (
+          <FollowUpInput
+            followUpText={followUpText}
+            setFollowUpText={setFollowUpText}
+            onSend={handleSendFollowUp}
+          />
+        )}
       </div>
     </div>
   );
