@@ -172,7 +172,8 @@ export async function validateInvestment(
     throw new InvestmentValidationError("투자 포인트를 입력해주세요.", "INVALID_AMOUNT", 400);
   }
 
-  if (!qaSet.isShared) {
+  // 미공유 QA: 오너가 아니면 투자 불가 (오너는 자신감 투자로 자동 공유됨)
+  if (!qaSet.isShared && qaSet.creatorId !== input.userId) {
     throw new InvestmentValidationError("공유되지 않은 Q&A에는 투자할 수 없습니다.", "NOT_SHARED", 400);
   }
 
@@ -863,8 +864,17 @@ export async function processInvestment(input: InvestmentInput): Promise<Investm
   if (!input.qaSetId) {
     throw new InvestmentValidationError("QASet ID is required", "QASET_ID_REQUIRED", 400);
   }
-  const { user, qaSet } = await loadEntities(input.userId, input.qaSetId);
+  let { user, qaSet } = await loadEntities(input.userId, input.qaSetId);
   await validateInvestment(input, user, qaSet);
+
+  // 오너가 미공유 QA에 투자 → 자동 공유 (자신감 투자)
+  if (!qaSet.isShared && qaSet.creatorId === input.userId) {
+    await prisma.qASet.update({
+      where: { id: input.qaSetId },
+      data: { isShared: true, sharedAt: new Date() },
+    });
+    qaSet = { ...qaSet, isShared: true }; // 로컬 상태 업데이트
+  }
 
   const result = input.isNegative
     ? await processNegativeInvestment(input, user, qaSet)
