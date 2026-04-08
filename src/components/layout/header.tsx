@@ -61,10 +61,12 @@ export function Header() {
               </Badge>
             )}
 
-            {/* 발자국 표시 */}
-            <Badge variant="secondary" className="font-mono text-sm" title="보유 발자국">
-              👣 {session.user.balance ?? "..."}
-            </Badge>
+            {/* 발자국 표시 - 클릭시 홈으로 */}
+            <Link href="/">
+              <Badge variant="secondary" className="font-mono text-sm cursor-pointer hover:bg-secondary/80" title="보유 발자국 · 홈으로">
+                👣 {session.user.balance ?? "..."}
+              </Badge>
+            </Link>
 
             {/* User dropdown */}
             <DropdownMenu>
