@@ -458,6 +458,43 @@ export function Section2Workspace({
             ))
           )}
 
+          {/* 인간 답변 입력 (humanAnswerMode에서 답변 전) - 블록 바로 아래 */}
+          {humanAnswerMode && messages.length <= 1 && !isStreaming && (
+            <Card className="border-2 border-dashed border-emerald-300 dark:border-emerald-700 bg-gradient-to-br from-emerald-50/50 to-teal-50/50 dark:from-emerald-950/20 dark:to-teal-950/20">
+              <CardContent className="p-4">
+                <div className="flex items-start gap-3 mb-3">
+                  <span className="text-lg">✍️</span>
+                  <div>
+                    <p className="text-sm font-medium text-emerald-800 dark:text-emerald-300">내 경험과 지식으로 답변해주세요</p>
+                    <p className="text-xs text-emerald-600 dark:text-emerald-400 mt-0.5">답변 후 길을 열면 다른 사람이 걸어갈 수 있습니다</p>
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <Textarea
+                    placeholder="이 주제에 대한 내 답변을 작성하세요..."
+                    value={input}
+                    onChange={(e) => setInput(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" && !e.shiftKey) {
+                        e.preventDefault();
+                        handleSubmitHumanAnswer();
+                      }
+                    }}
+                    className="min-h-[100px] resize-none bg-background"
+                    rows={4}
+                  />
+                  <Button
+                    onClick={handleSubmitHumanAnswer}
+                    disabled={!input.trim() || isStreaming}
+                    className="w-full gap-2 bg-emerald-600 hover:bg-emerald-700"
+                  >
+                    ✍️ 답변 등록
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
           {/* Streaming user message */}
           {isStreaming && pendingUserMessage && (
             <Card className="bg-primary/5">
@@ -527,45 +564,31 @@ export function Section2Workspace({
         </div>
       </div>
 
-      {/* Input area — 대화 진행용 (humanAnswer 모드 또는 본인 QA 추가질문) */}
-      {(isOwner || humanAnswerMode) && (
+      {/* Input area — 추가 질문용 (humanAnswer 답변 전에는 인라인 입력 사용) */}
+      {isOwner && !(humanAnswerMode && messages.length <= 1) && (
         <div className="border-t p-4">
-          {humanAnswerMode && messages.length <= 1 && (
-            <div className="max-w-3xl mx-auto mb-3 p-3 rounded-lg bg-gradient-to-r from-emerald-50 to-teal-50 dark:from-emerald-950/30 dark:to-teal-950/30 border border-emerald-200 dark:border-emerald-800">
-              <p className="text-sm font-medium text-emerald-800 dark:text-emerald-300">✍️ 내 경험과 지식으로 직접 답변해주세요</p>
-              <p className="text-xs text-emerald-600 dark:text-emerald-400 mt-0.5">답변 후 길을 열면 다른 사람이 걸어갈 수 있고, 보상이 돌아옵니다.</p>
-            </div>
-          )}
           <div className="max-w-3xl mx-auto flex gap-2">
             <Textarea
-              placeholder={
-                humanAnswerMode && messages.length <= 1
-                  ? "이 주제에 대한 내 답변을 작성하세요..."
-                  : "추가 질문을 입력하세요..."
-              }
+              placeholder="추가 질문을 입력하세요..."
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={(e) => {
                 if (e.key === "Enter" && !e.shiftKey) {
                   e.preventDefault();
-                  if (humanAnswerMode && messages.length <= 1) {
-                    handleSubmitHumanAnswer();
-                  } else {
-                    handleSendMessage();
-                  }
+                  handleSendMessage();
                 }
               }}
-              className={`resize-none ${humanAnswerMode && messages.length <= 1 ? "min-h-[120px]" : "min-h-[44px] max-h-32"}`}
-              rows={humanAnswerMode && messages.length <= 1 ? 4 : 1}
+              className="resize-none min-h-[44px] max-h-32"
+              rows={1}
               disabled={isStreaming}
             />
             <Button
-              onClick={humanAnswerMode && messages.length <= 1 ? handleSubmitHumanAnswer : handleSendMessage}
+              onClick={handleSendMessage}
               disabled={!input.trim() || isStreaming}
               size="sm"
               className="self-end"
             >
-              {humanAnswerMode && messages.length <= 1 ? "답변 등록" : "전송"}
+              전송
             </Button>
           </div>
         </div>
