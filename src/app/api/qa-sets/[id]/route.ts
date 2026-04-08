@@ -17,6 +17,18 @@ export async function GET(
       },
       messages: {
         orderBy: { orderIndex: "asc" },
+        include: {
+          nodeRelations: {
+            include: {
+              sourceOpinion: {
+                include: {
+                  user: { select: { id: true, name: true, image: true } },
+                },
+              },
+            },
+            orderBy: { createdAt: "asc" },
+          },
+        },
       },
       tags: {
         include: { tag: { select: { id: true, name: true, slug: true } } },
@@ -52,7 +64,26 @@ export async function GET(
     });
   }
 
-  return NextResponse.json(qaSet);
+  // Transform messages to include opinions in expected format
+  const messagesWithOpinions = qaSet.messages.map((msg: any) => ({
+    ...msg,
+    opinions: (msg.nodeRelations ?? [])
+      .filter((rel: any) => rel.sourceOpinion)
+      .map((rel: any) => ({
+        id: rel.sourceOpinion.id,
+        content: rel.sourceOpinion.content,
+        contentHtml: rel.sourceOpinion.contentHtml,
+        relationType: rel.relationType,
+        user: rel.sourceOpinion.user,
+        createdAt: rel.sourceOpinion.createdAt,
+      })),
+    nodeRelations: undefined, // Remove raw relation data
+  }));
+
+  return NextResponse.json({
+    ...qaSet,
+    messages: messagesWithOpinions,
+  });
 }
 
 // PATCH /api/qa-sets/[id] - Update Q&A set

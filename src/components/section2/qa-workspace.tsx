@@ -231,10 +231,10 @@ export function Section2Workspace({
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          qaSetId: qaSet.id,
-          messageId: afterMessageId, // 어떤 메시지 뒤에 달리는지
           content,
-          gapType: blockType, // opinion, question, correction, evidence
+          targetMessageId: afterMessageId, // 어떤 메시지에 달리는지
+          targetQASetId: afterMessageId ? null : qaSet.id, // 메시지가 없으면 QASet에 직접
+          relationType: blockType, // opinion, question, correction, evidence
         }),
       });
 
