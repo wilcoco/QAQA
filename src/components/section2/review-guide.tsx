@@ -700,11 +700,17 @@ export function ReviewGuide({
     setFollowUpText("");
   };
 
+  // 메시지에서 human-authored 답변이 있는지 확인
+  const hasHumanAuthoredAnswer = (qaSet.messages ?? []).some(
+    (m) => m.role === "assistant" && m.isHumanAuthored
+  );
+  const isHumanAnswerMode = isHumanAnswer || hasHumanAuthoredAnswer;
+
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   // 시나리오 H: 내가 직접 답변한 경우 (humanAnswerMode)
   // 내 답변에 대한 자신감 투자 → 길 열기
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-  if (isHumanAnswer && isOwner && !qaSet.isShared) {
+  if (isHumanAnswerMode && isOwner && !qaSet.isShared) {
     return (
       <div className="mt-6 mb-2">
         <div className="max-w-3xl mx-auto space-y-3">
@@ -896,7 +902,7 @@ export function ReviewGuide({
         )}
 
         {/* 💎 빈틈 채우기 — AI 답변일 때만 (사람 답변이면 이미 빈틈을 채운 것) */}
-        {!isHumanAnswer && (
+        {!isHumanAnswerMode && (
           <GapFiller
             qaSetId={qaSet.id}
             onSubmitted={onOpinionSubmitted}
