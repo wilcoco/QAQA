@@ -221,9 +221,6 @@ export function BlockView({
 
   return (
     <div className="space-y-1">
-      {/* Insert point at the very top (before first message) */}
-      {messages.length > 0 && renderInsertPoint(null, "top")}
-
       {/* MessageData blocks */}
       {messages.map((message, index) => renderMessageDataBlock(message, index))}
 
