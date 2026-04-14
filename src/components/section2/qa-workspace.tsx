@@ -429,6 +429,8 @@ export function Section2Workspace({
               userBalance={session?.user?.balance}
               onAddBlock={handleAddBlock}
               onInvest={(messageId) => setShowInvestDialog(true)}
+              isStreaming={isStreaming}
+              pendingUserMessage={pendingUserMessage}
             />
           ) : (
             /* 기존 리스트 뷰 */

@@ -16,6 +16,8 @@ interface BlockViewProps {
   userBalance?: number;
   onAddBlock: (afterMessageDataId: string | null, blockType: string, content: string) => Promise<void>;
   onInvest: (messageId: string) => void;
+  isStreaming?: boolean;
+  pendingUserMessage?: string | null;
 }
 
 type BlockType = "opinion" | "question" | "correction" | "evidence";
@@ -36,6 +38,8 @@ export function BlockView({
   userBalance,
   onAddBlock,
   onInvest,
+  isStreaming,
+  pendingUserMessage,
 }: BlockViewProps) {
   const [activeInsertPoint, setActiveInsertPoint] = useState<string | null>(null);
   const [selectedBlockType, setSelectedBlockType] = useState<BlockType | null>(null);
@@ -224,8 +228,8 @@ export function BlockView({
       {/* MessageData blocks */}
       {messages.map((message, index) => renderMessageDataBlock(message, index))}
 
-      {/* Empty state */}
-      {messages.length === 0 && (
+      {/* Empty state - 스트리밍 중이거나 대기 메시지가 있으면 표시 안함 */}
+      {messages.length === 0 && !isStreaming && !pendingUserMessage && (
         <div className="text-center py-10 text-muted-foreground">
           <div className="text-4xl mb-3">📝</div>
           <p>아직 블록이 없습니다</p>
