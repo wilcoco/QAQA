@@ -62,7 +62,15 @@ export default function HomePage() {
   const handleSelectSharedQA = useCallback(async (qaSetId: string) => {
     try {
       const res = await fetch(`/api/qa-sets/${qaSetId}`);
+      if (!res.ok) {
+        console.error("Failed to fetch QA set:", res.status);
+        return;
+      }
       const qaSet = await res.json();
+      if (!qaSet || qaSet.error) {
+        console.error("Invalid QA set response:", qaSet);
+        return;
+      }
       setActiveQASet(qaSet);
       setPendingQuestion(null);
       setActiveTab("home");
