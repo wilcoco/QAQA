@@ -52,6 +52,9 @@ model User {
   // Cluster relations
   clusterMemberships ClusterMember[]
   createdClusters    TopicCluster[]  @relation("ClusterCreator")
+
+  // Knowledge blocks
+  knowledgeBlocks    KnowledgeBlock[] @relation("BlockCreator")
 }
 
 model Account {
@@ -167,6 +170,9 @@ model QASet {
   relationsAsSource  NodeRelation[] @relation("RelationSource")
   relationsAsTarget  NodeRelation[] @relation("RelationTarget")
 
+  // Knowledge blocks
+  knowledgeBlocks    KnowledgeBlock[] @relation("BlockQASet")
+
   @@index([creatorId])
   @@index([isShared, sharedAt])
   @@index([isShared, totalInvested])
@@ -221,6 +227,9 @@ model Message {
 
   // 이 Message(문장)에 대한 발자국들
   investments     Investment[]
+
+  // Knowledge blocks
+  knowledgeBlocks KnowledgeBlock[] @relation("BlockMessage")
 
   @@index([qaSetId, orderIndex])
 }
@@ -331,6 +340,9 @@ model OpinionNode {
   relationsAsSource  NodeRelation[] @relation("OpinionRelationSource")
   relationsAsTarget  NodeRelation[] @relation("OpinionRelationTarget")
 
+  // Knowledge blocks
+  knowledgeBlocks    KnowledgeBlock[] @relation("BlockOpinion")
+
   @@index([userId])
   @@index([messageId])
 }
@@ -403,6 +415,9 @@ model TopicCluster {
 
   clusterRelationsAsSource  ClusterRelation[] @relation("ClusterRelationSource")
   clusterRelationsAsTarget  ClusterRelation[] @relation("ClusterRelationTarget")
+
+  // Knowledge blocks
+  knowledgeBlocks   KnowledgeBlock[] @relation("BlockCluster")
 
   createdAt         DateTime  @default(now())
   updatedAt         DateTime  @updatedAt
@@ -594,4 +609,107 @@ model AuditLog {
   @@index([userId, createdAt])
   @@index([qaSetId, createdAt])
   @@index([action, createdAt])
+}
+
+// ─────────────────────────────────────────────
+// KNOWLEDGE BLOCKS (Railway-style Block Editor)
+// ─────────────────────────────────────────────
+
+model KnowledgeBlock {
+  id              String   @id @default(cuid())
+
+  // 계층 구조
+  parentId        String?
+  parent          KnowledgeBlock?  @relation("BlockHierarchy", fields: [parentId], references: [id], onDelete: Cascade)
+  children        KnowledgeBlock[] @relation("BlockHierarchy")
+  orderIndex      Int              @default(0)
+
+  // 블록 타입: folder | question | ai_answer | human_answer | insight | opinion | reference | synthesis
+  blockType       String
+
+  // 컨텐츠
+  title           String
+  content         String?          @db.Text
+  contentHtml     String?          @db.Text
+  emoji           String?          // 커스텀 이모지 (기본값은 타입별)
+  color           String?          // 커스텀 색상
+
+  // 연결된 엔티티 (타입별)
+  qaSetId         String?
+  qaSet           QASet?           @relation("BlockQASet", fields: [qaSetId], references: [id], onDelete: SetNull)
+  messageId       String?
+  message         Message?         @relation("BlockMessage", fields: [messageId], references: [id], onDelete: SetNull)
+  opinionNodeId   String?
+  opinionNode     OpinionNode?     @relation("BlockOpinion", fields: [opinionNodeId], references: [id], onDelete: SetNull)
+
+  // 외부 링크 (reference 타입)
+  externalUrl     String?
+
+  // 캔버스 위치 (캔버스 뷰용)
+  posX            Float            @default(0)
+  posY            Float            @default(0)
+  width           Float            @default(240)
+  height          Float            @default(100)
+  isCollapsed     Boolean          @default(false)
+
+  // 주제 소속
+  topicClusterId  String?
+  topicCluster    TopicCluster?    @relation("BlockCluster", fields: [topicClusterId], references: [id], onDelete: SetNull)
+
+  // 메타
+  createdById     String
+  createdBy       User             @relation("BlockCreator", fields: [createdById], references: [id])
+  isPublic        Boolean          @default(true)
+  isPinned        Boolean          @default(false)
+
+  // 통계
+  viewCount       Int              @default(0)
+  citationCount   Int              @default(0)  // 다른 블록에서 참조된 횟수
+
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+
+  // 연결 관계
+  linksFrom       BlockLink[]      @relation("LinkSource")
+  linksTo         BlockLink[]      @relation("LinkTarget")
+
+  @@index([parentId, orderIndex])
+  @@index([topicClusterId])
+  @@index([createdById])
+  @@index([blockType])
+  @@index([qaSetId])
+}
+
+model BlockLink {
+  id              String   @id @default(cuid())
+
+  // 출발 블록
+  sourceId        String
+  source          KnowledgeBlock   @relation("LinkSource", fields: [sourceId], references: [id], onDelete: Cascade)
+
+  // 도착 블록
+  targetId        String
+  target          KnowledgeBlock   @relation("LinkTarget", fields: [targetId], references: [id], onDelete: Cascade)
+
+  // 연결 타입: reference | extends | contradicts | supports | derived_from | related
+  linkType        String           @default("reference")
+
+  // 연결 메타
+  label           String?          // 연결선에 표시될 텍스트
+  linkText        String?          // [[링크|표시텍스트]]의 표시텍스트
+  context         String?          // 링크가 만들어진 문맥
+
+  // 스타일
+  color           String?
+  style           String           @default("solid")  // solid | dashed | dotted
+
+  // 캔버스 위치 (베지어 커브 제어점)
+  controlX        Float?
+  controlY        Float?
+
+  createdAt       DateTime         @default(now())
+
+  @@unique([sourceId, targetId, linkType])
+  @@index([sourceId])
+  @@index([targetId])
 }
