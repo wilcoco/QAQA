@@ -117,7 +117,7 @@ export default function HomePage() {
           {/* Hero */}
           <div className="text-center space-y-4 max-w-2xl pt-12 pb-6">
             <h1 className="text-4xl font-bold tracking-tight">
-              👣 Dapsol
+              👣 업무 지식
             </h1>
             <p className="text-xl text-foreground font-medium">
               사람이 검증한 AI 답변을<br className="sm:hidden" /> 무료로 검색하세요

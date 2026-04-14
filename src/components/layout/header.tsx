@@ -25,7 +25,7 @@ export function Header() {
         {/* Logo */}
         <Link href="/" className="flex items-center gap-2 font-bold text-lg">
           <span className="text-2xl">👣</span>
-          <span className="hidden sm:inline">Dapsol</span>
+          <span className="hidden sm:inline">업무 지식</span>
         </Link>
 
         <div className="flex-1" />

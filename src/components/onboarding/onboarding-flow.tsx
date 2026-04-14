@@ -304,7 +304,7 @@ export function OnboardingFlow({ onComplete }: OnboardingFlowProps) {
             {/* 이렇게 동작하는 플랫폼입니다 설명 */}
             <Card className="bg-muted/10">
               <CardContent className="py-4 px-5 space-y-2">
-                <p className="text-xs font-medium text-muted-foreground">Dapsol에서는...</p>
+                <p className="text-xs font-medium text-muted-foreground">업무 지식에서는...</p>
                 <div className="space-y-1.5 text-sm">
                   <div className="flex items-center gap-2">
                     <span>💬</span><span>AI에게 질문하고 답변을 받을 수 있어요</span>
