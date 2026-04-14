@@ -29,6 +29,75 @@ const BLOCK_TYPES: { type: BlockType; icon: string; label: string; placeholder: 
   { type: "evidence", icon: "📎", label: "근거", placeholder: "관련 근거나 출처..." },
 ];
 
+// 블록 간 관계 타입 설정
+const RELATION_CONFIG: Record<string, { label: string; icon: string; color: string; lineColor: string }> = {
+  // 기본 Q→A 관계
+  answer: { label: "답변", icon: "💬", color: "text-emerald-600", lineColor: "border-emerald-400" },
+  // 후속 질문 관계 (relationSimple)
+  명확화: { label: "명확화", icon: "🔍", color: "text-blue-600", lineColor: "border-blue-400" },
+  더깊게: { label: "더 깊게", icon: "⬇️", color: "text-purple-600", lineColor: "border-purple-400" },
+  근거: { label: "근거 요청", icon: "📚", color: "text-orange-600", lineColor: "border-orange-400" },
+  검증: { label: "검증", icon: "✅", color: "text-green-600", lineColor: "border-green-400" },
+  반박: { label: "반박", icon: "⚡", color: "text-red-600", lineColor: "border-red-400" },
+  적용: { label: "적용", icon: "🔧", color: "text-teal-600", lineColor: "border-teal-400" },
+  정리: { label: "정리", icon: "📋", color: "text-gray-600", lineColor: "border-gray-400" },
+  AI오류: { label: "AI 오류 지적", icon: "🚫", color: "text-pink-600", lineColor: "border-pink-400" },
+  // 의견 관계
+  evidence: { label: "근거 보충", icon: "📎", color: "text-amber-600", lineColor: "border-amber-400" },
+  counterargument: { label: "반박", icon: "⚔️", color: "text-red-600", lineColor: "border-red-400" },
+  application: { label: "경험 공유", icon: "💡", color: "text-teal-600", lineColor: "border-teal-400" },
+  extension: { label: "추가 정보", icon: "➕", color: "text-purple-600", lineColor: "border-purple-400" },
+  question: { label: "추가 질문", icon: "❓", color: "text-blue-600", lineColor: "border-blue-400" },
+  // 기본값
+  followup: { label: "후속 질문", icon: "➡️", color: "text-indigo-600", lineColor: "border-indigo-400" },
+};
+
+// 블록 간 연결선 컴포넌트
+function BlockConnector({
+  relationType,
+  fromRole,
+  toRole
+}: {
+  relationType?: string | null;
+  fromRole: "user" | "assistant";
+  toRole: "user" | "assistant";
+}) {
+  // 관계 타입 결정
+  let relationKey = "answer";
+  if (relationType) {
+    relationKey = relationType;
+  } else if (fromRole === "user" && toRole === "assistant") {
+    relationKey = "answer";
+  } else if (fromRole === "assistant" && toRole === "user") {
+    relationKey = "followup";
+  }
+
+  const config = RELATION_CONFIG[relationKey] || RELATION_CONFIG.followup;
+
+  return (
+    <div className="flex items-center justify-center py-1">
+      <div className="flex flex-col items-center">
+        {/* 위쪽 연결선 */}
+        <div className={`w-0.5 h-3 border-l-2 border-dashed ${config.lineColor}`} />
+
+        {/* 관계 배지 */}
+        <div className={`
+          flex items-center gap-1.5 px-3 py-1 rounded-full
+          bg-background border-2 ${config.lineColor}
+          text-xs font-medium ${config.color}
+          shadow-sm
+        `}>
+          <span>{config.icon}</span>
+          <span>{config.label}</span>
+        </div>
+
+        {/* 아래쪽 연결선 */}
+        <div className={`w-0.5 h-3 border-l-2 border-dashed ${config.lineColor}`} />
+      </div>
+    </div>
+  );
+}
+
 export function BlockView({
   messages,
   qaSetId,
@@ -200,18 +269,34 @@ export function BlockView({
               {message.content}
             </div>
 
-            {/* 이 메시지에 달린 의견들 */}
+            {/* 이 메시지에 달린 의견들 (인라인 연결 표시) */}
             {message.opinions && message.opinions.length > 0 && (
               <div className="mt-3 pt-2 border-t border-border/50 space-y-2">
-                {message.opinions.map((opinion) => (
-                  <div key={opinion.id} className="flex items-start gap-2 text-xs">
-                    <span className="shrink-0">💬</span>
-                    <div>
-                      <span className="font-medium">{opinion.user.name ?? "익명"}</span>
-                      <span className="text-muted-foreground ml-1">{opinion.content}</span>
+                {message.opinions.map((opinion) => {
+                  const relConfig = RELATION_CONFIG[opinion.relationType] || RELATION_CONFIG.extension;
+                  return (
+                    <div key={opinion.id} className="relative pl-6">
+                      {/* 연결선 */}
+                      <div className={`absolute left-2 top-0 bottom-0 w-0.5 border-l-2 border-dashed ${relConfig.lineColor}`} />
+
+                      {/* 의견 카드 */}
+                      <div className={`
+                        p-2 rounded-lg border-l-4 ${relConfig.lineColor.replace('border-', 'border-l-')}
+                        bg-muted/30
+                      `}>
+                        <div className="flex items-center gap-2 mb-1">
+                          <span className={`text-xs font-medium ${relConfig.color}`}>
+                            {relConfig.icon} {relConfig.label}
+                          </span>
+                          <span className="text-[10px] text-muted-foreground">
+                            by {opinion.user.name ?? "익명"}
+                          </span>
+                        </div>
+                        <p className="text-xs text-foreground/80">{opinion.content}</p>
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             )}
           </CardContent>
@@ -224,9 +309,28 @@ export function BlockView({
   };
 
   return (
-    <div className="space-y-1">
-      {/* MessageData blocks */}
-      {messages.map((message, index) => renderMessageDataBlock(message, index))}
+    <div className="space-y-0">
+      {/* MessageData blocks with connectors */}
+      {messages.map((message, index) => {
+        const prevMessage = index > 0 ? messages[index - 1] : null;
+        const showConnector = prevMessage !== null;
+
+        return (
+          <div key={message.id}>
+            {/* 블록 간 연결선 */}
+            {showConnector && (
+              <BlockConnector
+                relationType={message.relationSimple}
+                fromRole={prevMessage.role as "user" | "assistant"}
+                toRole={message.role as "user" | "assistant"}
+              />
+            )}
+
+            {/* 블록 렌더링 */}
+            {renderMessageDataBlock(message, index)}
+          </div>
+        );
+      })}
 
       {/* Empty state - 스트리밍 중이거나 대기 메시지가 있으면 표시 안함 */}
       {messages.length === 0 && !isStreaming && !pendingUserMessage && (
