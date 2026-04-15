@@ -8,12 +8,12 @@ import { Section2Workspace } from "@/components/section2/qa-workspace";
 // import { NavigableKnowledgeMap } from "@/components/section5/navigable-knowledge-map"; // 지도 기능 임시 비활성화
 import { MyDashboard } from "@/components/section4/my-dashboard";
 import { AnswerGaps } from "@/components/section4/answer-gaps";
-import { HuntFeed } from "@/components/section1/hunt-feed";
+import { ReviewFeed } from "@/components/section1/review-feed";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import type { QASetWithMessages } from "@/types/qa-set";
 
-type ActiveTab = "home" | "hunt" | "profile";
+type ActiveTab = "home" | "review" | "profile";
 
 export default function HomePage() {
   const { data: session, status, update: updateSession } = useSession();
@@ -179,7 +179,7 @@ export default function HomePage() {
 
   const tabs: { key: ActiveTab; label: string; icon: string }[] = [
     { key: "home", label: "길", icon: "👣" },
-    { key: "hunt", label: "사냥", icon: "🐾" },
+    { key: "review", label: "리뷰", icon: "✏️" },
     { key: "profile", label: "나", icon: "👤" },
   ];
 
@@ -239,9 +239,9 @@ export default function HomePage() {
           </div>
         </div>
 
-        {/* 🎯 사냥: AI가 못 대답할 만한 질문 도전 */}
-        <div className={activeTab === "hunt" ? "block h-full overflow-y-auto" : "hidden"}>
-          <HuntFeed
+        {/* ✏️ 리뷰: 검토가 필요한 답변, 기여 기회 */}
+        <div className={activeTab === "review" ? "block h-full overflow-y-auto" : "hidden"}>
+          <ReviewFeed
             onSelectQASet={handleSelectSharedQA}
             onAnswerGap={handleAnswerGap}
             onNewQuestion={(q) => { handleNewQuestion(q); setActiveTab("home"); }}
@@ -330,7 +330,7 @@ function LandingActivityFeed() {
 
   if (feed.length === 0) return null;
 
-  const icons: Record<string, string> = { share: "📝", invest: "📈", hunt: "📉", milestone: "🏆" };
+  const icons: Record<string, string> = { share: "📝", invest: "📈", correction: "✏️", milestone: "🏆" };
 
   return (
     <div className="mb-6">

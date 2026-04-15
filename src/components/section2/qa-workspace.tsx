@@ -10,7 +10,7 @@ import { QASetWithMessages } from "@/types/qa-set";
 import { MessageCard } from "./message-card";
 import { ShareDialog } from "./share-dialog";
 import { InvestDialog } from "./invest-dialog";
-import { HuntDialog } from "./hunt-dialog";
+import { CorrectionDialog } from "./correction-dialog";
 import { UNINVEST_WINDOW_HOURS } from "@/lib/engine/uninvestment";
 import { ParentComparePanel } from "./parent-compare-panel";
 import { InvestorComments } from "./investor-comments";
@@ -45,7 +45,7 @@ export function Section2Workspace({
   const [pendingUserMessage, setPendingUserMessage] = useState<string | null>(null);
   const [showShareDialog, setShowShareDialog] = useState(false);
   const [showInvestDialog, setShowInvestDialog] = useState(false);
-  const [showHuntDialog, setShowHuntDialog] = useState(false);
+  const [showCorrectionDialog, setShowCorrectionDialog] = useState(false);
   const [showInvestors, setShowInvestors] = useState(false);
   const [showParentCompare, setShowParentCompare] = useState(false);
   const [uninvestingId, setUninvestingId] = useState<string | null>(null);
@@ -599,7 +599,7 @@ export function Section2Workspace({
               userBalance={session?.user?.balance ?? 30}
               isHumanAnswer={humanAnswerMode}
               onInvest={() => setShowInvestDialog(true)}
-              onCounterInvest={() => setShowHuntDialog(true)}
+              onCounterInvest={() => setShowCorrectionDialog(true)}
               onShareQA={() => setShowShareDialog(true)}
               onOpinionSubmitted={async () => {
                 const res = await fetch(`/api/qa-sets/${qaSet.id}`);
@@ -671,11 +671,11 @@ export function Section2Workspace({
           if (res.ok) onQASetUpdated(await res.json());
         }}
       />
-      <HuntDialog
-        open={showHuntDialog}
-        onOpenChange={setShowHuntDialog}
+      <CorrectionDialog
+        open={showCorrectionDialog}
+        onOpenChange={setShowCorrectionDialog}
         qaSet={qaSet}
-        onHunted={async () => {
+        onCorrected={async () => {
           const res = await fetch(`/api/qa-sets/${qaSet.id}`);
           if (res.ok) onQASetUpdated(await res.json());
         }}

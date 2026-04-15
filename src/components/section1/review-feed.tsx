@@ -6,12 +6,12 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Loader2, Search } from "lucide-react";
 
-interface HuntItem {
+interface ReviewItem {
   id: string;
   title: string | null;
   question?: string;
   description?: string;
-  type: "ai_question" | "knowledge_gap" | "human_challenge";
+  type: "ai_question" | "knowledge_gap" | "needs_review";
   rewardMultiplier?: number;
   answerCount?: number;
   gapType?: string;
@@ -24,10 +24,10 @@ interface HuntItem {
   totalInvested?: number;
   investorCount?: number;
   aiAnswer?: string | null;
-  humanCorrection?: string | null;
+  humanImprovement?: string | null;
 }
 
-interface HuntFeedProps {
+interface ReviewFeedProps {
   onSelectQASet: (qaSetId: string) => void;
   onAnswerGap: (gapId: string, description: string) => void;
   onNewQuestion: (question: string) => void;
@@ -38,16 +38,16 @@ const GAP_TYPE_INFO: Record<string, { icon: string; label: string }> = {
   inconsistency: { icon: "⚡", label: "불일치" },
   missing_evidence: { icon: "📎", label: "근거 부족" },
   conflicting_claims: { icon: "⚔️", label: "의견 충돌" },
-  ai_doesnt_know: { icon: "🤷", label: "AI가 모름" },
+  ai_doesnt_know: { icon: "🤷", label: "검토 필요" },
   local_info: { icon: "📍", label: "지역 정보" },
   experience: { icon: "💡", label: "경험 필요" },
 };
 
-export function HuntFeed({ onSelectQASet, onAnswerGap, onNewQuestion }: HuntFeedProps) {
+export function ReviewFeed({ onSelectQASet, onAnswerGap, onNewQuestion }: ReviewFeedProps) {
   const { data: session } = useSession();
-  const [items, setItems] = useState<HuntItem[]>([]);
+  const [items, setItems] = useState<ReviewItem[]>([]);
   const [loading, setLoading] = useState(true);
-  const [startingHunt, setStartingHunt] = useState<string | null>(null);
+  const [selecting, setSelecting] = useState<string | null>(null);
   const [questionInput, setQuestionInput] = useState("");
 
   const handleSubmitQuestion = () => {
@@ -56,19 +56,19 @@ export function HuntFeed({ onSelectQASet, onAnswerGap, onNewQuestion }: HuntFeed
     setQuestionInput("");
   };
 
-  const fetchHuntItems = useCallback(async () => {
+  const fetchReviewItems = useCallback(async () => {
     setLoading(true);
     try {
-      // AI 질문 + 지식 갭 + 사람 도전 병렬 로드
-      const [aiQuestionsRes, gapsRes, challengesRes] = await Promise.all([
+      // AI 질문 + 지식 갭 + 리뷰 필요한 답변 병렬 로드
+      const [aiQuestionsRes, gapsRes, needsReviewRes] = await Promise.all([
         fetch("/api/qa-sets/ai-questions?limit=10"),
         fetch("/api/knowledge-gaps?limit=10"),
         fetch("/api/qa-sets?shared=true&sort=recent&limit=10&hunt=true"),
       ]);
 
-      const combined: HuntItem[] = [];
+      const combined: ReviewItem[] = [];
 
-      // AI 질문
+      // AI 질문 (답변 필요)
       if (aiQuestionsRes.ok) {
         const data = await aiQuestionsRes.json();
         (data.questions ?? []).forEach((q: any) => {
@@ -83,7 +83,7 @@ export function HuntFeed({ onSelectQASet, onAnswerGap, onNewQuestion }: HuntFeed
         });
       }
 
-      // 지식 갭
+      // 지식 갭 (기여 기회)
       if (gapsRes.ok) {
         const data = await gapsRes.json();
         (data.gaps ?? []).forEach((g: any) => {
@@ -98,19 +98,19 @@ export function HuntFeed({ onSelectQASet, onAnswerGap, onNewQuestion }: HuntFeed
         });
       }
 
-      // 사람 도전 (AI가 잘 못 대답한 것들)
-      if (challengesRes.ok) {
-        const data = await challengesRes.json();
+      // 리뷰/개선된 답변
+      if (needsReviewRes.ok) {
+        const data = await needsReviewRes.json();
         (data.qaSets ?? []).filter((qa: any) => qa.summary).forEach((qa: any) => {
           combined.push({
             id: qa.id,
             title: qa.title,
-            type: "human_challenge",
+            type: "needs_review",
             creator: qa.creator,
             totalInvested: qa.totalInvested,
             investorCount: qa.investorCount,
             aiAnswer: qa.messages?.[0]?.content,
-            humanCorrection: qa.summary,
+            humanImprovement: qa.summary,
           });
         });
       }
@@ -119,19 +119,19 @@ export function HuntFeed({ onSelectQASet, onAnswerGap, onNewQuestion }: HuntFeed
       combined.sort(() => Math.random() - 0.5);
       setItems(combined);
     } catch (err) {
-      console.error("Failed to load hunt items:", err);
+      console.error("Failed to load review items:", err);
     } finally {
       setLoading(false);
     }
   }, []);
 
   useEffect(() => {
-    fetchHuntItems();
-  }, [fetchHuntItems]);
+    fetchReviewItems();
+  }, [fetchReviewItems]);
 
-  const handleStartHunt = async (item: HuntItem) => {
+  const handleSelect = async (item: ReviewItem) => {
     if (!session?.user?.id) return;
-    setStartingHunt(item.id);
+    setSelecting(item.id);
 
     try {
       if (item.type === "ai_question") {
@@ -142,7 +142,7 @@ export function HuntFeed({ onSelectQASet, onAnswerGap, onNewQuestion }: HuntFeed
         onSelectQASet(item.id);
       }
     } finally {
-      setStartingHunt(null);
+      setSelecting(null);
     }
   };
 
@@ -150,8 +150,8 @@ export function HuntFeed({ onSelectQASet, onAnswerGap, onNewQuestion }: HuntFeed
     return (
       <div className="h-full flex items-center justify-center text-muted-foreground p-6">
         <div className="text-center space-y-3">
-          <div className="text-4xl">🐾</div>
-          <p>로그인하고 AI 빈틈 사냥에 도전하세요</p>
+          <div className="text-4xl">✏️</div>
+          <p>로그인하고 AI 답변 개선에 참여하세요</p>
         </div>
       </div>
     );
@@ -172,9 +172,9 @@ export function HuntFeed({ onSelectQASet, onAnswerGap, onNewQuestion }: HuntFeed
       <div className="max-w-2xl mx-auto p-4 space-y-4 pb-20">
         {/* 헤더 + 질문 입력 */}
         <div className="text-center py-2">
-          <h1 className="text-xl font-bold">🐾 AI 빈틈 사냥</h1>
+          <h1 className="text-xl font-bold">✏️ 리뷰 & 기여</h1>
           <p className="text-xs text-muted-foreground mt-1">
-            AI가 잘 모르는 분야에서 내 전문성을 발휘하세요
+            AI 답변을 검토하고 함께 개선하세요
           </p>
         </div>
 
@@ -183,7 +183,7 @@ export function HuntFeed({ onSelectQASet, onAnswerGap, onNewQuestion }: HuntFeed
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
-              placeholder="AI보다 내가 더 잘 아는 주제로 질문하기..."
+              placeholder="새로운 질문으로 길 만들기..."
               value={questionInput}
               onChange={(e) => setQuestionInput(e.target.value)}
               onKeyDown={(e) => {
@@ -201,31 +201,31 @@ export function HuntFeed({ onSelectQASet, onAnswerGap, onNewQuestion }: HuntFeed
             size="sm"
             className="h-10 px-3"
           >
-            🐾 도전
+            👣 시작
           </Button>
         </div>
 
-        {/* 다른 사람들의 사냥 */}
+        {/* 기여 기회 목록 */}
         {items.length > 0 && (
-          <p className="text-xs text-muted-foreground pt-2">다른 사냥감에 도전하기</p>
+          <p className="text-xs text-muted-foreground pt-2">기여가 필요한 답변들</p>
         )}
 
-        {/* 사냥 아이템 목록 */}
+        {/* 리뷰 아이템 목록 */}
         {items.length > 0 ? (
           <div className="space-y-3">
             {items.map((item) => (
-              <HuntCard
+              <ReviewCard
                 key={`${item.type}-${item.id}`}
                 item={item}
-                onStart={() => handleStartHunt(item)}
-                isStarting={startingHunt === item.id}
+                onSelect={() => handleSelect(item)}
+                isSelecting={selecting === item.id}
               />
             ))}
           </div>
         ) : (
           <div className="text-center py-6 text-muted-foreground">
-            <div className="text-3xl mb-2">🏜️</div>
-            <p className="text-sm">아직 사냥감이 없습니다</p>
+            <div className="text-3xl mb-2">✨</div>
+            <p className="text-sm">지금은 리뷰할 답변이 없습니다</p>
           </div>
         )}
 
@@ -234,14 +234,14 @@ export function HuntFeed({ onSelectQASet, onAnswerGap, onNewQuestion }: HuntFeed
   );
 }
 
-function HuntCard({
+function ReviewCard({
   item,
-  onStart,
-  isStarting,
+  onSelect,
+  isSelecting,
 }: {
-  item: HuntItem;
-  onStart: () => void;
-  isStarting: boolean;
+  item: ReviewItem;
+  onSelect: () => void;
+  isSelecting: boolean;
 }) {
   const gapInfo = item.gapType ? GAP_TYPE_INFO[item.gapType] : null;
 
@@ -251,17 +251,17 @@ function HuntCard({
       <div className="flex items-center gap-2 mb-2">
         {item.type === "ai_question" && (
           <span className="text-[10px] px-2 py-0.5 rounded-full bg-purple-100 dark:bg-purple-950 text-purple-700 dark:text-purple-400 font-medium">
-            🤖 AI가 묻는 질문
+            🤖 답변 필요
           </span>
         )}
         {item.type === "knowledge_gap" && (
           <span className="text-[10px] px-2 py-0.5 rounded-full bg-amber-100 dark:bg-amber-950 text-amber-700 dark:text-amber-400 font-medium">
-            {gapInfo?.icon ?? "❓"} {gapInfo?.label ?? "지식 갭"}
+            {gapInfo?.icon ?? "❓"} {gapInfo?.label ?? "기여 기회"}
           </span>
         )}
-        {item.type === "human_challenge" && (
+        {item.type === "needs_review" && (
           <span className="text-[10px] px-2 py-0.5 rounded-full bg-green-100 dark:bg-green-950 text-green-700 dark:text-green-400 font-medium">
-            ✏️ 빈틈 채워짐
+            ✏️ 개선됨
           </span>
         )}
         {item.rewardMultiplier && item.rewardMultiplier > 1 && (
@@ -289,11 +289,11 @@ function HuntCard({
         </div>
       )}
 
-      {/* 사람 수정 (있으면) */}
-      {item.humanCorrection && (
+      {/* 사람 개선 (있으면) */}
+      {item.humanImprovement && (
         <div className="flex items-start gap-2 mb-2">
           <span className="shrink-0 w-5 h-5 rounded-full bg-amber-100 dark:bg-amber-900/50 flex items-center justify-center text-[10px]">✏️</span>
-          <p className="text-[11px] text-amber-700 dark:text-amber-400 line-clamp-1">{item.humanCorrection}</p>
+          <p className="text-[11px] text-amber-700 dark:text-amber-400 line-clamp-1">{item.humanImprovement}</p>
         </div>
       )}
 
@@ -301,7 +301,7 @@ function HuntCard({
       <div className="flex items-center justify-between pt-2 border-t border-border/50 mt-2">
         <div className="flex items-center gap-3 text-[10px] text-muted-foreground">
           {item.answerCount !== undefined && (
-            <span>{item.answerCount}명 도전</span>
+            <span>{item.answerCount}명 참여</span>
           )}
           {item.investorCount !== undefined && item.investorCount > 0 && (
             <span>👣 {item.totalInvested}</span>
@@ -312,17 +312,17 @@ function HuntCard({
         </div>
         <Button
           size="sm"
-          variant={item.type === "human_challenge" ? "outline" : "default"}
+          variant={item.type === "needs_review" ? "outline" : "default"}
           className="text-xs h-7 px-3"
-          onClick={onStart}
-          disabled={isStarting}
+          onClick={onSelect}
+          disabled={isSelecting}
         >
-          {isStarting ? (
+          {isSelecting ? (
             <Loader2 className="h-3 w-3 animate-spin" />
-          ) : item.type === "human_challenge" ? (
+          ) : item.type === "needs_review" ? (
             "보기"
           ) : (
-            "🐾 도전"
+            "👣 참여"
           )}
         </Button>
       </div>

@@ -18,14 +18,14 @@ import { QASetWithMessages } from "@/types/qa-set";
 import { HUNTING_REASON_TYPES } from "@/lib/constants";
 import { getMaxInvestmentByLevel } from "@/lib/engine/trust-level";
 
-interface HuntDialogProps {
+interface CorrectionDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   qaSet: QASetWithMessages;
-  onHunted: () => void;
+  onCorrected: () => void;
 }
 
-export function HuntDialog({ open, onOpenChange, qaSet, onHunted }: HuntDialogProps) {
+export function CorrectionDialog({ open, onOpenChange, qaSet, onCorrected }: CorrectionDialogProps) {
   const { data: session, update: updateSession } = useSession();
   const [step, setStep] = useState<"reason" | "detail">("reason");
   const [huntingReason, setHuntingReason] = useState<string | null>(null);
@@ -85,7 +85,7 @@ export function HuntDialog({ open, onOpenChange, qaSet, onHunted }: HuntDialogPr
         }
 
         setTimeout(() => {
-          onHunted();
+          onCorrected();
           onOpenChange(false);
           setSuccessMessage(null);
         }, 2500);

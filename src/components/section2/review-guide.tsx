@@ -21,16 +21,16 @@ interface ReviewGuideProps {
   onAskFollowUp: (question: string) => void;
 }
 
-// AI 빈틈 유형 (사냥 메타포어)
-const AI_GAP_TYPES = [
-  { value: "wrong_info", label: "틀린 정보", icon: "🎯", desc: "AI가 잘못 알고 있음" },
-  { value: "outdated", label: "최신 아님", icon: "⏰", desc: "내가 더 최신 정보 앎" },
-  { value: "made_up", label: "없는 얘기", icon: "🚫", desc: "AI가 지어냄" },
-  { value: "reality_differs", label: "현실은 다름", icon: "📍", desc: "실제로 해보면 다름" },
-  { value: "missing_key", label: "중요한 게 빠짐", icon: "🔑", desc: "핵심을 놓침" },
-  { value: "ai_doesnt_know", label: "AI도 모름", icon: "🤷", desc: "이건 사람만 앎" },
-  { value: "local_info", label: "로컬 정보", icon: "🏠", desc: "우리 동네/현장은 다름" },
-  { value: "experience", label: "경험담", icon: "💬", desc: "실제로 해본 사람만 앎" },
+// AI 답변 개선 유형
+const AI_IMPROVEMENT_TYPES = [
+  { value: "wrong_info", label: "틀린 정보", icon: "🎯", desc: "정확한 정보로 수정" },
+  { value: "outdated", label: "최신 아님", icon: "⏰", desc: "최신 정보로 업데이트" },
+  { value: "made_up", label: "없는 얘기", icon: "🚫", desc: "사실 확인 필요" },
+  { value: "reality_differs", label: "현실은 다름", icon: "📍", desc: "실제 경험 반영" },
+  { value: "missing_key", label: "중요한 게 빠짐", icon: "🔑", desc: "핵심 내용 추가" },
+  { value: "ai_doesnt_know", label: "AI도 모름", icon: "🤷", desc: "전문 지식 추가" },
+  { value: "local_info", label: "로컬 정보", icon: "🏠", desc: "지역/현장 정보 추가" },
+  { value: "experience", label: "경험담", icon: "💬", desc: "실제 경험 공유" },
   { value: "other", label: "기타", icon: "✏️", desc: "직접 입력" },
 ];
 
@@ -188,7 +188,7 @@ function OpinionsList({
     <div className="rounded-xl border bg-muted/30 p-3 space-y-2">
       <div className="flex items-center gap-2 text-sm font-medium">
         <span>💬</span>
-        <span>다른 사람들의 빈틈 채우기</span>
+        <span>다른 사람들의 개선하기</span>
         <Badge variant="secondary" className="text-[10px]">{opinions.length}</Badge>
       </div>
       <div className="space-y-2">
@@ -230,7 +230,7 @@ function OpinionsList({
   );
 }
 
-// ─── 빈틈 채우기 (AI Gap Filler) ───
+// ─── 개선하기 (AI Gap Filler) ───
 function GapFiller({
   qaSetId,
   onSubmitted,
@@ -263,7 +263,7 @@ function GapFiller({
 
   const maxConfidence = Math.min(userBalance, 100);
 
-  // 기존 빈틈 채우기 로드
+  // 기존 개선하기 로드
   useEffect(() => {
     fetch(`/api/opinions?qaSetId=${qaSetId}`)
       .then((r) => r.ok ? r.json() : null)
@@ -309,12 +309,12 @@ function GapFiller({
     try {
       const gapLabel = selectedGap === "other"
         ? customGapType.trim()
-        : AI_GAP_TYPES.find((t) => t.value === selectedGap)?.label;
-      const gapIcon = AI_GAP_TYPES.find((t) => t.value === selectedGap)?.icon ?? "💎";
+        : AI_IMPROVEMENT_TYPES.find((t) => t.value === selectedGap)?.label;
+      const gapIcon = AI_IMPROVEMENT_TYPES.find((t) => t.value === selectedGap)?.icon ?? "💎";
 
       const fullContent = `${gapIcon} [${gapLabel}] ${content.trim()}`;
 
-      // 1. 빈틈 채우기 의견 생성 + 기본 보상 + 확신 투자
+      // 1. 개선하기 의견 생성 + 기본 보상 + 확신 투자
       const opRes = await fetch("/api/opinions", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -447,7 +447,7 @@ function GapFiller({
           </p>
         )}
 
-        {/* 다른 빈틈도 채우기 버튼 */}
+        {/* 다른 답변도 개선하기 버튼 */}
         <Button
           variant="outline"
           size="sm"
@@ -461,7 +461,7 @@ function GapFiller({
             setAiInvestment(0);
           }}
         >
-          💎 다른 빈틈도 채우기
+          💎 다른 답변도 개선하기
         </Button>
       </div>
     );
@@ -483,12 +483,12 @@ function GapFiller({
         </Badge>
       </div>
 
-      {/* 기존 빈틈 채우기 (있으면 표시) */}
+      {/* 기존 개선하기 (있으면 표시) */}
       {existingOpinions.length > 0 && (
         <div className="p-3 rounded-xl bg-muted/50 border space-y-2">
           <div className="flex items-center gap-2 text-xs font-medium text-muted-foreground">
             <span>💬</span>
-            <span>이미 채워진 빈틈 {existingOpinions.length}개</span>
+            <span>기존 개선 의견 {existingOpinions.length}개</span>
           </div>
           <div className="space-y-1.5 max-h-32 overflow-y-auto">
             {existingOpinions.map((op) => (
@@ -523,7 +523,7 @@ function GapFiller({
 
       {/* Gap Type Selection */}
       <div className="flex flex-wrap gap-1.5">
-        {AI_GAP_TYPES.map((gap) => (
+        {AI_IMPROVEMENT_TYPES.map((gap) => (
           <button
             key={gap.value}
             onClick={() => setSelectedGap(selectedGap === gap.value ? null : gap.value)}
@@ -543,7 +543,7 @@ function GapFiller({
       {selectedGap === "other" && (
         <input
           type="text"
-          placeholder="빈틈 유형을 직접 입력하세요..."
+          placeholder="개선 유형을 직접 입력하세요..."
           value={customGapType}
           onChange={(e) => setCustomGapType(e.target.value)}
           className="w-full h-9 px-3 text-sm rounded-lg border bg-background focus:outline-none focus:ring-2 focus:ring-primary/50"
@@ -622,7 +622,7 @@ function GapFiller({
             )}
             {!submitting && !evaluating && (
               <>
-                💎 빈틈 채우기 + {confidence}👣 투자
+                💎 개선하기 + {confidence}👣 투자
               </>
             )}
           </Button>
@@ -741,7 +741,7 @@ export function ReviewGuide({
             </div>
           </div>
 
-          {/* 💎 빈틈 채우기 (통합 모듈) */}
+          {/* 💎 개선하기 (통합 모듈) */}
           <GapFiller
             qaSetId={qaSet.id}
             onSubmitted={onOpinionSubmitted}
@@ -859,7 +859,7 @@ export function ReviewGuide({
           </div>
         )}
 
-        {/* 💎 빈틈 채우기 — AI 답변일 때만 (사람 답변이면 이미 빈틈을 채운 것) */}
+        {/* 💎 개선하기 — AI 답변일 때만 (사람 답변이면 이미 개선한 것) */}
         {!isHumanAnswerMode && (
           <GapFiller
             qaSetId={qaSet.id}
