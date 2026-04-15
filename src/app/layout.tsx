@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { SessionProvider } from "next-auth/react";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { GameProvider } from "@/components/gamification";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -31,7 +32,9 @@ export default function RootLayout({
       >
         <SessionProvider>
           <TooltipProvider>
-            {children}
+            <GameProvider>
+              {children}
+            </GameProvider>
           </TooltipProvider>
         </SessionProvider>
       </body>

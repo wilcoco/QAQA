@@ -16,7 +16,8 @@ import { ParentComparePanel } from "./parent-compare-panel";
 import { InvestorComments } from "./investor-comments";
 import { ReviewGuide } from "./review-guide";
 import { BlockView } from "./block-view";
-import { ArrowLeft, LayoutGrid, List } from "lucide-react";
+import { ArrowLeft, LayoutGrid, List, BarChart3 } from "lucide-react";
+import { useGame, XPBar, XP_REWARDS, ConversationStats } from "@/components/gamification";
 
 interface Section2Props {
   qaSet: QASetWithMessages | null;
@@ -53,8 +54,12 @@ export function Section2Workspace({
   const [dismissedShareHint, setDismissedShareHint] = useState(false);
   const [dismissedRecommendHint, setDismissedRecommendHint] = useState(false);
   const [viewMode, setViewMode] = useState<"list" | "block">("block"); // 기본 블록 뷰
+  const [showStats, setShowStats] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const sentRef = useRef<string | null>(null);
+
+  // 게임화 훅
+  const { addXP, incrementStat, checkAchievements } = useGame();
 
   // Auto-scroll
   useEffect(() => {
@@ -119,7 +124,14 @@ export function Section2Workspace({
       }
 
       const refreshRes = await fetch(`/api/qa-sets/${targetQASet.id}`);
-      if (refreshRes.ok) onQASetUpdated(await refreshRes.json());
+      if (refreshRes.ok) {
+        onQASetUpdated(await refreshRes.json());
+        // XP 보상
+        addXP(XP_REWARDS.askQuestion, "질문");
+        addXP(XP_REWARDS.receiveAnswer, "답변 받음");
+        incrementStat("totalQuestions");
+        checkAchievements();
+      }
     } catch (error) {
       console.error("Chat error:", error);
       setErrorMessage(error instanceof Error ? error.message : "요청 중 오류가 발생했습니다.");
@@ -242,6 +254,18 @@ export function Section2Workspace({
         // QASet 새로고침
         const refreshRes = await fetch(`/api/qa-sets/${qaSet.id}`);
         if (refreshRes.ok) onQASetUpdated(await refreshRes.json());
+
+        // XP 보상 (타입별 차등)
+        if (blockType === "correction") {
+          addXP(XP_REWARDS.addCorrection, "수정/오류지적");
+          incrementStat("totalCorrections");
+        } else if (blockType === "evidence") {
+          addXP(XP_REWARDS.addEvidence, "근거 추가");
+        } else {
+          addXP(XP_REWARDS.addOpinion, "의견 추가");
+          incrementStat("totalOpinions");
+        }
+        checkAchievements();
       }
     } catch (err) {
       console.error("Failed to add block:", err);
@@ -281,6 +305,9 @@ export function Section2Workspace({
         </div>
 
         <div className="flex gap-2 shrink-0 items-center">
+          {/* XP 바 (컴팩트) */}
+          <XPBar compact />
+
           {/* View mode toggle */}
           <div className="flex items-center border rounded-lg overflow-hidden">
             <button
@@ -298,6 +325,15 @@ export function Section2Workspace({
               <List className="h-3.5 w-3.5" />
             </button>
           </div>
+
+          {/* 구조 분석 버튼 */}
+          <button
+            onClick={() => setShowStats(v => !v)}
+            className={`p-1.5 rounded-lg border transition-colors ${showStats ? "bg-primary text-primary-foreground" : "hover:bg-muted"}`}
+            title="대화 구조 분석"
+          >
+            <BarChart3 className="h-3.5 w-3.5" />
+          </button>
 
           {qaSet.parentQASetId && (
             <Button variant="ghost" size="sm" onClick={() => setShowParentCompare(true)} className="text-xs">
@@ -410,6 +446,13 @@ export function Section2Workspace({
             } catch { return null; }
           })()}
           <InvestorComments qaSetId={qaSet.id} />
+        </div>
+      )}
+
+      {/* 대화 구조 분석 패널 */}
+      {showStats && (
+        <div className="border-b bg-gradient-to-br from-indigo-50/50 to-purple-50/50 dark:from-indigo-950/20 dark:to-purple-950/20 px-4 py-3">
+          <ConversationStats qaSet={qaSet} />
         </div>
       )}
 
