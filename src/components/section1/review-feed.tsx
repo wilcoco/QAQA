@@ -150,8 +150,8 @@ export function ReviewFeed({ onSelectQASet, onAnswerGap, onNewQuestion }: Review
     return (
       <div className="h-full flex items-center justify-center text-muted-foreground p-6">
         <div className="text-center space-y-3">
-          <div className="text-4xl">✏️</div>
-          <p>로그인하고 AI 답변 개선에 참여하세요</p>
+          <div className="text-4xl">❗🦶</div>
+          <p>로그인하고 질문에 답변을 제공하세요</p>
         </div>
       </div>
     );
@@ -170,11 +170,11 @@ export function ReviewFeed({ onSelectQASet, onAnswerGap, onNewQuestion }: Review
   return (
     <div className="h-full overflow-y-auto">
       <div className="max-w-2xl mx-auto p-4 space-y-4 pb-20">
-        {/* 헤더 + 질문 입력 */}
+        {/* 헤더 */}
         <div className="text-center py-2">
-          <h1 className="text-xl font-bold">✏️ 리뷰 & 기여</h1>
+          <h1 className="text-xl font-bold">❗🦶 답변하기</h1>
           <p className="text-xs text-muted-foreground mt-1">
-            AI 답변을 검토하고 함께 개선하세요
+            인간이나 AI가 질문한 것을 찾아 답변을 제공하세요
           </p>
         </div>
 
@@ -205,12 +205,12 @@ export function ReviewFeed({ onSelectQASet, onAnswerGap, onNewQuestion }: Review
           </Button>
         </div>
 
-        {/* 기여 기회 목록 */}
+        {/* 답변 기회 목록 */}
         {items.length > 0 && (
-          <p className="text-xs text-muted-foreground pt-2">기여가 필요한 답변들</p>
+          <p className="text-xs text-muted-foreground pt-2">답변이 필요한 질문들</p>
         )}
 
-        {/* 리뷰 아이템 목록 */}
+        {/* 질문 목록 */}
         {items.length > 0 ? (
           <div className="space-y-3">
             {items.map((item) => (
@@ -225,7 +225,7 @@ export function ReviewFeed({ onSelectQASet, onAnswerGap, onNewQuestion }: Review
         ) : (
           <div className="text-center py-6 text-muted-foreground">
             <div className="text-3xl mb-2">✨</div>
-            <p className="text-sm">지금은 리뷰할 답변이 없습니다</p>
+            <p className="text-sm">지금은 답변이 필요한 질문이 없습니다</p>
           </div>
         )}
 

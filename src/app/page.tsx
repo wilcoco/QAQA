@@ -141,25 +141,25 @@ export default function HomePage() {
               href="/login"
               className="p-4 rounded-xl border-2 border-blue-200 dark:border-blue-800 bg-gradient-to-br from-blue-50 to-blue-100/50 dark:from-blue-950/30 dark:to-blue-900/20 text-center space-y-2 hover:shadow-lg hover:scale-105 transition-all"
             >
-              <div className="text-2xl">🔍</div>
-              <h3 className="font-semibold text-sm">길 찾기</h3>
-              <p className="text-[10px] text-muted-foreground leading-snug">검증된 답변<br />검색하세요</p>
+              <div className="text-2xl">🦶❓</div>
+              <h3 className="font-semibold text-sm">질문하기</h3>
+              <p className="text-[10px] text-muted-foreground leading-snug">AI+인간 대화<br />검색/생성</p>
             </Link>
             <Link
               href="/login"
               className="p-4 rounded-xl border-2 border-green-200 dark:border-green-800 bg-gradient-to-br from-green-50 to-green-100/50 dark:from-green-950/30 dark:to-green-900/20 text-center space-y-2 hover:shadow-lg hover:scale-105 transition-all"
             >
-              <div className="text-2xl">👣</div>
-              <h3 className="font-semibold text-sm">발자국 남기기</h3>
-              <p className="text-[10px] text-muted-foreground leading-snug">경험과 의견을<br />공유하세요</p>
+              <div className="text-2xl">❗🦶</div>
+              <h3 className="font-semibold text-sm">답변하기</h3>
+              <p className="text-[10px] text-muted-foreground leading-snug">질문에 답변<br />제공하기</p>
             </Link>
             <Link
               href="/login"
               className="p-4 rounded-xl border-2 border-amber-200 dark:border-amber-800 bg-gradient-to-br from-amber-50 to-amber-100/50 dark:from-amber-950/30 dark:to-amber-900/20 text-center space-y-2 hover:shadow-lg hover:scale-105 transition-all"
             >
-              <div className="text-2xl">🏔️</div>
-              <h3 className="font-semibold text-sm">개척하기</h3>
-              <p className="text-[10px] text-muted-foreground leading-snug">새로운 길을<br />만드세요</p>
+              <div className="text-2xl">👤</div>
+              <h3 className="font-semibold text-sm">내 활동</h3>
+              <p className="text-[10px] text-muted-foreground leading-snug">기여 이력<br />확인하기</p>
             </Link>
           </div>
 
@@ -177,10 +177,10 @@ export default function HomePage() {
     );
   }
 
-  const tabs: { key: ActiveTab; label: string; icon: string }[] = [
-    { key: "home", label: "길", icon: "👣" },
-    { key: "review", label: "리뷰", icon: "✏️" },
-    { key: "profile", label: "나", icon: "👤" },
+  const tabs: { key: ActiveTab; label: string; icon: string; desc: string }[] = [
+    { key: "home", label: "질문하기", icon: "🦶❓", desc: "AI+인간 대화 검색/생성" },
+    { key: "review", label: "답변하기", icon: "❗🦶", desc: "질문에 답변 제공" },
+    { key: "profile", label: "나", icon: "👤", desc: "내 활동" },
   ];
 
   return (
@@ -213,7 +213,7 @@ export default function HomePage() {
 
       {/* Main content */}
       <main className="flex-1 overflow-hidden">
-        {/* 🏠 홈: 검색 + 피드 + Q&A 워크스페이스 (한 흐름) */}
+        {/* 🦶❓ 질문하기: 기존 AI+인간 대화 검색 또는 새 질문 생성 */}
         <div className={activeTab === "home" ? "block h-full" : "hidden"}>
           <div className="h-full relative">
             <div className={activeQASet ? "hidden" : "block h-full"}>
@@ -239,7 +239,7 @@ export default function HomePage() {
           </div>
         </div>
 
-        {/* ✏️ 리뷰: 검토가 필요한 답변, 기여 기회 */}
+        {/* ❗🦶 답변하기: 인간이나 AI가 질문한 것에 답변 제공 */}
         <div className={activeTab === "review" ? "block h-full overflow-y-auto" : "hidden"}>
           <ReviewFeed
             onSelectQASet={handleSelectSharedQA}

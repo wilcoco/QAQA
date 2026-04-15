@@ -244,9 +244,9 @@ export function Section1QuestionInput({ onNewQuestion, onSelectSharedQA, onAnswe
           {/* 타이틀 */}
           {!search && (
             <div className="text-center py-2">
-              <h1 className="text-xl font-bold">👣 발자국 따라가기</h1>
+              <h1 className="text-xl font-bold">🦶❓ 질문하기</h1>
               <p className="text-xs text-muted-foreground mt-1">
-                먼저 간 사람의 검증된 답변을 따라가거나, 새 길을 만드세요
+                기존 AI+인간 대화를 검색하거나, 새 질문을 시작하세요
               </p>
             </div>
           )}
@@ -254,7 +254,7 @@ export function Section1QuestionInput({ onNewQuestion, onSelectSharedQA, onAnswe
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none z-10" />
             <Input
               ref={inputRef}
-              placeholder="이전 발자국 검색..."
+              placeholder="기존 대화 검색 또는 새 질문..."
               value={question}
               onChange={(e) => {
                 setQuestion(e.target.value);
