@@ -47,6 +47,7 @@ export interface InvestmentInput {
   opinionNodeId?: string;    // 의견 투자 (추가)
   amount: number;
   isNegative: boolean;
+  ipAddress?: string | null; // Anti-gaming: IP 추적
   comment?: string;
   huntingReason?: string;
   huntingEvidence?: string;
@@ -202,7 +203,7 @@ export async function validateInvestment(
   const qaSetId = input.qaSetId!;
   const violation = await checkInvestmentRules(
     prisma, input.userId, qaSetId, qaSet.creatorId,
-    input.amount, user.createdAt, input.isNegative,
+    input.amount, user.createdAt, input.isNegative, input.ipAddress,
   );
   if (violation) {
     throw new InvestmentValidationError(violation.message, violation.code, violation.statusCode);
@@ -298,6 +299,7 @@ async function processPositiveInvestment(
       data: {
         qaSetId, userId: input.userId, amount: input.amount,
         position: pos, effectiveAmount: effAmount, isNegative: false, comment: input.comment,
+        ipAddress: input.ipAddress,
       },
     });
 
@@ -423,6 +425,7 @@ async function processNegativeInvestment(
         position: pos, effectiveAmount: effAmount, isNegative: true, comment: input.comment,
         huntingReason: input.huntingReason, huntingEvidence: input.huntingEvidence,
         huntingTargetMessageId: input.huntingTargetMessageId,
+        ipAddress: input.ipAddress,
       },
     });
 

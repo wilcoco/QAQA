@@ -270,6 +270,9 @@ model Investment {
   huntingEvidence         String?   // 근거 (최대 500자)
   huntingTargetMessageId  String?   // 특정 메시지 타겟
 
+  // Anti-gaming: IP 추적 (다중계정 방지)
+  ipAddress   String?
+
   createdAt   DateTime @default(now())
 
   // Rewards generated from this investment
@@ -279,6 +282,7 @@ model Investment {
   @@index([opinionNodeId])
   @@index([messageId, sentenceIndex])
   @@index([userId])
+  @@index([ipAddress])
 }
 
 model RewardEvent {
