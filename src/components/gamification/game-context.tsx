@@ -15,6 +15,7 @@ export const XP_REWARDS = {
   addOpinion: 15,
   addEvidence: 20,
   addCorrection: 25,
+  humanAnswer: 30, // 인간 답변 추가
   shareQA: 30,
   receiveFootprint: 10,
   giveFootprint: 5,
@@ -36,6 +37,7 @@ export interface Achievement {
 
 export interface UserStats {
   totalQuestions: number;
+  totalAnswers: number; // 인간 답변 수
   totalOpinions: number;
   totalCorrections: number;
   totalShares: number;
@@ -71,6 +73,22 @@ const ACHIEVEMENTS: Achievement[] = [
     emoji: "💬",
     condition: (s) => s.totalOpinions >= 1,
     xpReward: 20,
+  },
+  {
+    id: "first_answer",
+    title: "첫 답변",
+    description: "첫 번째 인간 답변을 제공했습니다",
+    emoji: "💡",
+    condition: (s) => s.totalAnswers >= 1,
+    xpReward: 30,
+  },
+  {
+    id: "helpful_expert",
+    title: "도움의 손길",
+    description: "10개의 답변을 제공했습니다",
+    emoji: "🎓",
+    condition: (s) => s.totalAnswers >= 10,
+    xpReward: 150,
   },
   {
     id: "fact_checker",
@@ -174,6 +192,7 @@ interface FloatingXP {
 export function GameProvider({ children }: { children: ReactNode }) {
   const [stats, setStats] = useState<UserStats>({
     totalQuestions: 0,
+    totalAnswers: 0,
     totalOpinions: 0,
     totalCorrections: 0,
     totalShares: 0,

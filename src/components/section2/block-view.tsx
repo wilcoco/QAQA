@@ -26,19 +26,22 @@ interface BlockViewProps {
   pendingUserMessage?: string | null;
 }
 
-type BlockType = "opinion" | "question" | "correction" | "evidence";
+type BlockType = "answer" | "opinion" | "question" | "correction" | "evidence";
 
-const BLOCK_TYPES: { type: BlockType; icon: string; label: string; placeholder: string }[] = [
-  { type: "opinion", icon: "💬", label: "의견", placeholder: "이 부분에 대한 내 의견..." },
-  { type: "question", icon: "❓", label: "질문", placeholder: "이 부분이 궁금해요..." },
-  { type: "correction", icon: "✏️", label: "수정", placeholder: "이 부분은 이렇게 고쳐야 해요..." },
-  { type: "evidence", icon: "📎", label: "근거", placeholder: "관련 근거나 출처..." },
+const BLOCK_TYPES: { type: BlockType; icon: string; label: string; placeholder: string; forQuestion?: boolean; forAnswer?: boolean }[] = [
+  { type: "answer", icon: "💡", label: "답변", placeholder: "이 질문에 대한 내 답변...", forQuestion: true },
+  { type: "opinion", icon: "💬", label: "의견", placeholder: "이 부분에 대한 내 의견...", forQuestion: true, forAnswer: true },
+  { type: "question", icon: "❓", label: "추가 질문", placeholder: "이 부분이 궁금해요...", forAnswer: true },
+  { type: "correction", icon: "✏️", label: "수정 제안", placeholder: "이 부분은 이렇게 고쳐야 해요...", forAnswer: true },
+  { type: "evidence", icon: "📎", label: "근거 추가", placeholder: "관련 근거나 출처...", forQuestion: true, forAnswer: true },
 ];
 
 // 블록 간 관계 타입 설정
 const RELATION_CONFIG: Record<string, { label: string; icon: string; color: string; lineColor: string }> = {
   // 기본 Q→A 관계
-  answer: { label: "답변", icon: "💬", color: "text-emerald-600", lineColor: "border-emerald-400" },
+  answer: { label: "AI 답변", icon: "🤖", color: "text-emerald-600", lineColor: "border-emerald-400" },
+  humanAnswer: { label: "인간 답변", icon: "💡", color: "text-amber-600", lineColor: "border-amber-400" },
+  인간답변: { label: "인간 답변", icon: "💡", color: "text-amber-600", lineColor: "border-amber-400" },
   // 후속 질문 관계 (relationSimple)
   명확화: { label: "명확화", icon: "🔍", color: "text-blue-600", lineColor: "border-blue-400" },
   더깊게: { label: "더 깊게", icon: "⬇️", color: "text-purple-600", lineColor: "border-purple-400" },
@@ -147,8 +150,18 @@ export function BlockView({
     }
   };
 
-  const renderInsertPoint = (afterMessageDataId: string | null, position: "top" | "middle" | "bottom") => {
+  const renderInsertPoint = (afterMessageDataId: string | null, position: "top" | "middle" | "bottom", prevMessageRole?: "user" | "assistant") => {
     const isActive = activeInsertPoint === afterMessageDataId;
+
+    // 이전 메시지가 질문(user)이면 forQuestion, 답변(assistant)이면 forAnswer인 블록 타입만 표시
+    const availableBlockTypes = BLOCK_TYPES.filter(bt => {
+      if (!prevMessageRole) return true; // 첫 블록이면 모두 표시
+      if (prevMessageRole === "user") return bt.forQuestion;
+      return bt.forAnswer;
+    });
+
+    // 질문 뒤에는 "답변"을 강조, 답변 뒤에는 다른 것들
+    const isAfterQuestion = prevMessageRole === "user";
 
     return (
       <div className={`relative ${position === "middle" ? "my-1" : ""}`}>
@@ -163,10 +176,12 @@ export function BlockView({
           <button className={`shrink-0 flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full transition-all ${
             isActive
               ? "bg-primary text-primary-foreground"
-              : "bg-muted text-muted-foreground hover:bg-primary/10 hover:text-primary"
+              : isAfterQuestion
+                ? "bg-amber-100 dark:bg-amber-950 text-amber-700 dark:text-amber-400 hover:bg-amber-200"
+                : "bg-muted text-muted-foreground hover:bg-primary/10 hover:text-primary"
           }`}>
             {isActive ? <X className="h-3 w-3" /> : <Plus className="h-3 w-3" />}
-            {isActive ? "취소" : "블록 추가"}
+            {isActive ? "취소" : isAfterQuestion ? "💡 답변 추가" : "블록 추가"}
           </button>
           <div className="flex-1 border-t border-dashed border-primary/30 group-hover:border-primary/60 transition-colors" />
         </div>
@@ -176,14 +191,16 @@ export function BlockView({
           <div className="mt-2 mb-3 p-3 rounded-xl border-2 border-primary/20 bg-primary/5 space-y-3 animate-in fade-in slide-in-from-top-2 duration-200">
             {/* Block type buttons */}
             <div className="flex flex-wrap gap-2">
-              {BLOCK_TYPES.map((bt) => (
+              {availableBlockTypes.map((bt) => (
                 <button
                   key={bt.type}
                   onClick={() => setSelectedBlockType(bt.type)}
                   className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
                     selectedBlockType === bt.type
                       ? "bg-primary text-primary-foreground shadow-sm"
-                      : "bg-background border hover:border-primary/50"
+                      : bt.type === "answer" && isAfterQuestion
+                        ? "bg-amber-100 dark:bg-amber-900 border-amber-300 dark:border-amber-700 text-amber-700 dark:text-amber-300 hover:bg-amber-200"
+                        : "bg-background border hover:border-primary/50"
                   }`}
                 >
                   <span>{bt.icon}</span>
@@ -328,7 +345,7 @@ export function BlockView({
         </Card>
 
         {/* Insert point after this message */}
-        {renderInsertPoint(message.id, "middle")}
+        {renderInsertPoint(message.id, "middle", message.role as "user" | "assistant")}
       </div>
     );
   };
@@ -387,15 +404,17 @@ export function UserBlock({
   const blockInfo = BLOCK_TYPES.find(b => b.type === type);
 
   const bgColors: Record<BlockType, string> = {
+    answer: "bg-amber-50/50 dark:bg-amber-950/20 border-amber-200/50 dark:border-amber-800/50",
     opinion: "bg-purple-50/50 dark:bg-purple-950/20 border-purple-200/50 dark:border-purple-800/50",
-    question: "bg-amber-50/50 dark:bg-amber-950/20 border-amber-200/50 dark:border-amber-800/50",
+    question: "bg-blue-50/50 dark:bg-blue-950/20 border-blue-200/50 dark:border-blue-800/50",
     correction: "bg-red-50/50 dark:bg-red-950/20 border-red-200/50 dark:border-red-800/50",
     evidence: "bg-green-50/50 dark:bg-green-950/20 border-green-200/50 dark:border-green-800/50",
   };
 
   const barColors: Record<BlockType, string> = {
+    answer: "bg-amber-400",
     opinion: "bg-purple-400",
-    question: "bg-amber-400",
+    question: "bg-blue-400",
     correction: "bg-red-400",
     evidence: "bg-green-400",
   };

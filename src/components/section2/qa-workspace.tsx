@@ -242,34 +242,58 @@ export function Section2Workspace({
     if (!session?.user?.id) return;
 
     try {
-      // 의견으로 저장 (기존 opinions API 활용)
-      const res = await fetch("/api/opinions", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          content,
-          targetMessageId: afterMessageId, // 어떤 메시지에 달리는지
-          targetQASetId: afterMessageId ? null : qaSet.id, // 메시지가 없으면 QASet에 직접
-          relationType: blockType, // opinion, question, correction, evidence
-        }),
-      });
+      let res: Response;
 
-      if (res.ok) {
-        // QASet 새로고침
-        const refreshRes = await fetch(`/api/qa-sets/${qaSet.id}`);
-        if (refreshRes.ok) onQASetUpdated(await refreshRes.json());
+      if (blockType === "answer") {
+        // "답변" 블록은 실제 메시지로 추가 (human-answer API 활용)
+        res = await fetch(`/api/qa-sets/${qaSet.id}/human-answer`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            content,
+            afterMessageId, // 어떤 메시지 뒤에 답변하는지
+          }),
+        });
 
-        // XP 보상 (타입별 차등)
-        if (blockType === "correction") {
-          addXP(XP_REWARDS.addCorrection, "수정/오류지적");
-          incrementStat("totalCorrections");
-        } else if (blockType === "evidence") {
-          addXP(XP_REWARDS.addEvidence, "근거 추가");
-        } else {
-          addXP(XP_REWARDS.addOpinion, "의견 추가");
-          incrementStat("totalOpinions");
+        if (res.ok) {
+          // QASet 새로고침
+          const refreshRes = await fetch(`/api/qa-sets/${qaSet.id}`);
+          if (refreshRes.ok) onQASetUpdated(await refreshRes.json());
+
+          addXP(XP_REWARDS.humanAnswer || 30, "인간 답변 추가");
+          incrementStat("totalAnswers");
+          checkAchievements();
         }
-        checkAchievements();
+      } else {
+        // 기타 블록은 의견으로 저장 (기존 opinions API 활용)
+        res = await fetch("/api/opinions", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            content,
+            targetMessageId: afterMessageId, // 어떤 메시지에 달리는지
+            targetQASetId: afterMessageId ? null : qaSet.id, // 메시지가 없으면 QASet에 직접
+            relationType: blockType, // opinion, question, correction, evidence
+          }),
+        });
+
+        if (res.ok) {
+          // QASet 새로고침
+          const refreshRes = await fetch(`/api/qa-sets/${qaSet.id}`);
+          if (refreshRes.ok) onQASetUpdated(await refreshRes.json());
+
+          // XP 보상 (타입별 차등)
+          if (blockType === "correction") {
+            addXP(XP_REWARDS.addCorrection, "수정/오류지적");
+            incrementStat("totalCorrections");
+          } else if (blockType === "evidence") {
+            addXP(XP_REWARDS.addEvidence, "근거 추가");
+          } else {
+            addXP(XP_REWARDS.addOpinion, "의견 추가");
+            incrementStat("totalOpinions");
+          }
+          checkAchievements();
+        }
       }
     } catch (err) {
       console.error("Failed to add block:", err);
