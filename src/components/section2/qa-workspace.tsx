@@ -469,6 +469,7 @@ export function Section2Workspace({
           {viewMode === "block" ? (
             <BlockView
               messages={messages}
+              qaSet={qaSet}
               qaSetId={qaSet.id}
               isOwner={isOwner}
               isShared={qaSet.isShared}

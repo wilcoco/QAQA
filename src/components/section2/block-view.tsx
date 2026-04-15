@@ -5,10 +5,16 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent } from "@/components/ui/card";
 import { Plus, ThumbsUp, X, Send, Loader2 } from "lucide-react";
-import type { MessageData } from "@/types/qa-set";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import type { MessageData, QASetWithMessages } from "@/types/qa-set";
 
 interface BlockViewProps {
   messages: MessageData[];
+  qaSet?: QASetWithMessages;
   qaSetId: string;
   isOwner: boolean;
   isShared: boolean;
@@ -100,6 +106,7 @@ function BlockConnector({
 
 export function BlockView({
   messages,
+  qaSet,
   qaSetId,
   isOwner,
   isShared,
@@ -252,6 +259,24 @@ export function BlockView({
               <span className="text-xs font-medium text-muted-foreground">
                 {isUser ? "질문" : "AI 답변"}
               </span>
+
+              {/* AI 답변: 검토 현황 표시 */}
+              {isAI && qaSet && (qaSet.investorCount > 0 || (message.opinions?.length || 0) > 0) && (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <span className="px-2 py-0.5 rounded-full bg-blue-50 dark:bg-blue-950/30 text-blue-600 dark:text-blue-400 text-[10px] font-medium cursor-help">
+                      👥 {qaSet.investorCount + (message.opinions?.length || 0)}명 검토
+                    </span>
+                  </TooltipTrigger>
+                  <TooltipContent side="top" className="text-xs">
+                    <div className="space-y-0.5">
+                      {qaSet.investorCount > 0 && <div>👣 {qaSet.investorCount}명 발자국</div>}
+                      {(message.opinions?.length || 0) > 0 && <div>✏️ {message.opinions?.length}개 의견</div>}
+                    </div>
+                  </TooltipContent>
+                </Tooltip>
+              )}
+
               {/* Quick actions */}
               <div className="ml-auto flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                 <button
