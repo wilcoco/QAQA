@@ -61,19 +61,23 @@ export function Section2Workspace({
   // 게임화 훅
   const { addXP, incrementStat, checkAchievements } = useGame();
 
-  // Auto-scroll
+  // QASet 변경 시 맨 위로 스크롤
   useEffect(() => {
-    if (scrollRef.current) {
-      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+    if (scrollRef.current && qaSet?.id) {
+      scrollRef.current.scrollTop = 0;
     }
-  }, [qaSet?.messages, streamingContent, pendingUserMessage]);
-
-  // Reset hints when qaSet changes
-  useEffect(() => {
+    // Reset hints when qaSet changes
     setShowReviewPanel(false);
     setDismissedShareHint(false);
     setDismissedRecommendHint(false);
   }, [qaSet?.id]);
+
+  // 스트리밍 중에만 맨 아래로 스크롤
+  useEffect(() => {
+    if (scrollRef.current && (isStreaming || pendingUserMessage)) {
+      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+    }
+  }, [streamingContent, pendingUserMessage, isStreaming]);
 
   const sendMessage = useCallback(async (messageText: string, currentQASet: QASetWithMessages) => {
     if (!messageText.trim() || isStreaming) return;
