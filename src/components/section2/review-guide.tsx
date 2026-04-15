@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Slider } from "@/components/ui/slider";
-import { Loader2, Send, ChevronRight } from "lucide-react";
+import { Loader2, Send } from "lucide-react";
 import type { QASetWithMessages } from "@/types/qa-set";
 
 interface ReviewGuideProps {
@@ -35,46 +35,6 @@ const AI_GAP_TYPES = [
 ];
 
 // ─── Progress Stepper ───
-function JourneyStepper({ step }: { step: number }) {
-  const steps = [
-    { label: "질문", icon: "?" },
-    { label: "답변", icon: "A" },
-    { label: "판단", icon: "🔍" },
-    { label: "길 열기", icon: "📢" },
-    { label: "걸어가기", icon: "👣" },
-  ];
-
-  return (
-    <div className="flex items-center gap-0.5 px-1">
-      {steps.map((s, i) => {
-        const done = i < step;
-        const current = i === step;
-        return (
-          <div key={s.label} className="flex items-center">
-            <div
-              className={`
-                flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium transition-all
-                ${done
-                  ? "bg-primary/15 text-primary"
-                  : current
-                    ? "bg-primary text-primary-foreground shadow-sm shadow-primary/25 animate-pulse"
-                    : "bg-muted/50 text-muted-foreground/50"
-                }
-              `}
-            >
-              <span className="text-xs">{done ? "✓" : s.icon}</span>
-              <span className="hidden sm:inline">{s.label}</span>
-            </div>
-            {i < steps.length - 1 && (
-              <ChevronRight className={`h-3 w-3 mx-0.5 ${i < step ? "text-primary/40" : "text-muted-foreground/20"}`} />
-            )}
-          </div>
-        );
-      })}
-    </div>
-  );
-}
-
 // ─── Stats Display ───
 function InvestStats({
   investorCount,
@@ -714,8 +674,6 @@ export function ReviewGuide({
     return (
       <div className="mt-6 mb-2">
         <div className="max-w-3xl mx-auto space-y-3">
-          <JourneyStepper step={2} />
-
           {/* 답변 완료 + 자신감 투자 유도 */}
           <div className="relative overflow-hidden rounded-2xl border-2 border-amber-200 dark:border-amber-800 bg-gradient-to-br from-amber-50 via-yellow-50 to-orange-50 dark:from-amber-950/30 dark:via-yellow-950/30 dark:to-orange-950/30 p-5">
             <div className="absolute top-0 right-0 w-32 h-32 bg-amber-200/20 rounded-full -translate-y-1/2 translate-x-1/2" />
@@ -752,9 +710,6 @@ export function ReviewGuide({
     return (
       <div className="mt-6 mb-2">
         <div className="max-w-3xl mx-auto space-y-3">
-          {/* Progress: 질문 → 답변 → [판단] 단계 */}
-          <JourneyStepper step={2} />
-
           {/* AI 답변 평가 — 반대 발자국으로 표현 */}
           <div className="grid grid-cols-2 gap-3">
             {/* 만족 → 길 열기로 이어짐 */}
@@ -814,14 +769,10 @@ export function ReviewGuide({
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   // 시나리오 B: 공유된 QA (본인 또는 타인)
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-  const journeyStep = !myInvestment && isOwner ? 4 : investorCount > 0 ? 4 : 3;
 
   return (
     <div className="mt-6 mb-2">
       <div className="max-w-3xl mx-auto space-y-3">
-        {/* Progress */}
-        <JourneyStepper step={journeyStep} />
-
         {/* 발자국 현황 */}
         <InvestStats
           investorCount={investorCount}
