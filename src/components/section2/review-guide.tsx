@@ -773,13 +773,15 @@ export function ReviewGuide({
   return (
     <div className="mt-6 mb-2">
       <div className="max-w-3xl mx-auto space-y-3">
-        {/* 발자국 현황 */}
-        <InvestStats
-          investorCount={investorCount}
-          totalInvested={totalInvested}
-          negativeCount={negativeCount}
-          negativeInvested={negativeInvested}
-        />
+        {/* 발자국 현황 - 본인이 이미 투자했으면 아래에서 표시하므로 생략 */}
+        {!(isOwner && myInvestment) && (
+          <InvestStats
+            investorCount={investorCount}
+            totalInvested={totalInvested}
+            negativeCount={negativeCount}
+            negativeInvested={negativeInvested}
+          />
+        )}
 
         {/* ── 발자국 행동 ── */}
         {isOwner ? (
@@ -808,11 +810,16 @@ export function ReviewGuide({
                   <span className="text-lg">✅</span>
                   <span className="text-sm font-medium">내 발자국: {myInvestment.amount}👣</span>
                 </div>
-                {investorCount > 1 && (
-                  <span className="text-xs text-muted-foreground">
-                    + {investorCount - 1}명이 추가로 걸어감
-                  </span>
-                )}
+                <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                  {investorCount > 1 && (
+                    <span>+ {investorCount - 1}명</span>
+                  )}
+                  {totalInvested > myInvestment.amount && (
+                    <span className="text-green-600 dark:text-green-400 font-medium">
+                      총 {totalInvested}👣
+                    </span>
+                  )}
+                </div>
               </div>
             </div>
           )
