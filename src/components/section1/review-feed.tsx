@@ -30,7 +30,6 @@ interface ReviewItem {
 interface ReviewFeedProps {
   onSelectQASet: (qaSetId: string) => void;
   onAnswerGap: (gapId: string, description: string) => void;
-  onNewQuestion: (question: string) => void;
 }
 
 const GAP_TYPE_INFO: Record<string, { icon: string; label: string }> = {
@@ -43,18 +42,21 @@ const GAP_TYPE_INFO: Record<string, { icon: string; label: string }> = {
   experience: { icon: "💡", label: "경험 필요" },
 };
 
-export function ReviewFeed({ onSelectQASet, onAnswerGap, onNewQuestion }: ReviewFeedProps) {
+export function ReviewFeed({ onSelectQASet, onAnswerGap }: ReviewFeedProps) {
   const { data: session } = useSession();
   const [items, setItems] = useState<ReviewItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [selecting, setSelecting] = useState<string | null>(null);
-  const [questionInput, setQuestionInput] = useState("");
+  const [searchQuery, setSearchQuery] = useState("");
 
-  const handleSubmitQuestion = () => {
-    if (!questionInput.trim()) return;
-    onNewQuestion(questionInput.trim());
-    setQuestionInput("");
-  };
+  // 검색어로 필터링
+  const filteredItems = searchQuery.trim()
+    ? items.filter(item =>
+        (item.title?.toLowerCase().includes(searchQuery.toLowerCase())) ||
+        (item.question?.toLowerCase().includes(searchQuery.toLowerCase())) ||
+        (item.description?.toLowerCase().includes(searchQuery.toLowerCase()))
+      )
+    : items;
 
   const fetchReviewItems = useCallback(async () => {
     setLoading(true);
@@ -180,42 +182,36 @@ export function ReviewFeed({ onSelectQASet, onAnswerGap, onNewQuestion }: Review
           </p>
         </div>
 
-        {/* 상단 질문 입력 */}
-        <div className="flex gap-2">
-          <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder="새로운 질문으로 길 만들기..."
-              value={questionInput}
-              onChange={(e) => setQuestionInput(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter" && !e.shiftKey) {
-                  e.preventDefault();
-                  handleSubmitQuestion();
-                }
-              }}
-              className="pl-9 h-10"
-            />
-          </div>
-          <Button
-            onClick={handleSubmitQuestion}
-            disabled={!questionInput.trim()}
-            size="sm"
-            className="h-10 px-3"
-          >
-            👣 시작
-          </Button>
+        {/* 질문 검색 */}
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input
+            placeholder="답변할 질문 검색..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="pl-9 h-10"
+          />
+          {searchQuery && (
+            <button
+              onClick={() => setSearchQuery("")}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+            >
+              ✕
+            </button>
+          )}
         </div>
 
         {/* 답변 기회 목록 */}
-        {items.length > 0 && (
-          <p className="text-xs text-muted-foreground pt-2">답변이 필요한 질문들</p>
+        {filteredItems.length > 0 && (
+          <p className="text-xs text-muted-foreground pt-2">
+            {searchQuery ? `"${searchQuery}" 검색 결과 (${filteredItems.length}건)` : "답변이 필요한 질문들"}
+          </p>
         )}
 
         {/* 질문 목록 */}
-        {items.length > 0 ? (
+        {filteredItems.length > 0 ? (
           <div className="space-y-3">
-            {items.map((item) => (
+            {filteredItems.map((item) => (
               <ReviewCard
                 key={`${item.type}-${item.id}`}
                 item={item}
@@ -223,6 +219,11 @@ export function ReviewFeed({ onSelectQASet, onAnswerGap, onNewQuestion }: Review
                 isSelecting={selecting === item.id}
               />
             ))}
+          </div>
+        ) : searchQuery ? (
+          <div className="text-center py-6 text-muted-foreground">
+            <div className="text-3xl mb-2">🔍</div>
+            <p className="text-sm">"{searchQuery}"에 해당하는 질문이 없습니다</p>
           </div>
         ) : (
           <div className="text-center py-6 text-muted-foreground">

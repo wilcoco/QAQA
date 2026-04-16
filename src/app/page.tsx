@@ -244,7 +244,6 @@ export default function HomePage() {
           <ReviewFeed
             onSelectQASet={handleSelectSharedQA}
             onAnswerGap={handleAnswerGap}
-            onNewQuestion={(q) => { handleNewQuestion(q); setActiveTab("home"); }}
           />
         </div>
 
