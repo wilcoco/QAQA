@@ -49,6 +49,7 @@ export interface QASetWithMessages {
   } | null;
   isShared: boolean;
   sharedAt: Date | null;
+  isAIGenerated: boolean;
   knowledgeCard: string | null;
   topicClusterId: string | null;
   topicCluster?: { id: string; name: string } | null;

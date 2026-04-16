@@ -150,7 +150,7 @@ export function BlockView({
     }
   };
 
-  const renderInsertPoint = (afterMessageDataId: string | null, position: "top" | "middle" | "bottom", prevMessageRole?: "user" | "assistant") => {
+  const renderInsertPoint = (afterMessageDataId: string | null, position: "top" | "middle" | "bottom", prevMessageRole?: "user" | "assistant", isLastQuestion?: boolean) => {
     const isActive = activeInsertPoint === afterMessageDataId;
 
     // 이전 메시지가 질문(user)이면 forQuestion, 답변(assistant)이면 forAnswer인 블록 타입만 표시
@@ -163,12 +163,17 @@ export function BlockView({
     // 질문 뒤에는 "답변"을 강조, 답변 뒤에는 다른 것들
     const isAfterQuestion = prevMessageRole === "user";
 
+    // 답변이 필요한 질문인 경우 버튼 항상 표시:
+    // - AI 생성 질문이거나 공유된 QASet의 마지막 질문
+    const needsAnswer = isAfterQuestion && isLastQuestion && (qaSet?.isAIGenerated || (isShared && !isOwner));
+    const alwaysVisible = needsAnswer || isActive;
+
     return (
       <div className={`relative ${position === "middle" ? "my-1" : ""}`}>
         {/* Insert button line */}
         <div
           className={`group flex items-center gap-2 py-1 cursor-pointer transition-all ${
-            isActive ? "opacity-100" : "opacity-0 hover:opacity-100"
+            alwaysVisible ? "opacity-100" : "opacity-0 hover:opacity-100"
           }`}
           onClick={() => handleInsertClick(afterMessageDataId)}
         >
@@ -252,7 +257,7 @@ export function BlockView({
     );
   };
 
-  const renderMessageDataBlock = (message: MessageData, index: number) => {
+  const renderMessageDataBlock = (message: MessageData, index: number, isLastQuestionWithoutAnswer: boolean) => {
     const isUser = message.role === "user";
     const isAI = message.role === "assistant";
 
@@ -345,7 +350,7 @@ export function BlockView({
         </Card>
 
         {/* Insert point after this message */}
-        {renderInsertPoint(message.id, "middle", message.role as "user" | "assistant")}
+        {renderInsertPoint(message.id, "middle", message.role as "user" | "assistant", isLastQuestionWithoutAnswer)}
       </div>
     );
   };
@@ -355,7 +360,11 @@ export function BlockView({
       {/* MessageData blocks with connectors */}
       {messages.map((message, index) => {
         const prevMessage = index > 0 ? messages[index - 1] : null;
+        const nextMessage = index < messages.length - 1 ? messages[index + 1] : null;
         const showConnector = prevMessage !== null;
+
+        // 이 메시지가 질문(user)이고, 다음 메시지가 없거나 다음 메시지도 질문이면 "답변 필요"
+        const isLastQuestionWithoutAnswer = message.role === "user" && (!nextMessage || nextMessage.role === "user");
 
         return (
           <div key={message.id}>
@@ -369,7 +378,7 @@ export function BlockView({
             )}
 
             {/* 블록 렌더링 */}
-            {renderMessageDataBlock(message, index)}
+            {renderMessageDataBlock(message, index, isLastQuestionWithoutAnswer)}
           </div>
         );
       })}
