@@ -124,6 +124,7 @@ interface LoadedQASet {
   totalInvested: number;
   negativeInvested: number;
   burnedAmount: number;
+  isAIGenerated: boolean;  // AI 생성 질문 여부
   investments: Array<{
     id: string;
     userId: string;
@@ -204,6 +205,7 @@ export async function validateInvestment(
   const violation = await checkInvestmentRules(
     prisma, input.userId, qaSetId, qaSet.creatorId,
     input.amount, user.createdAt, input.isNegative, input.ipAddress,
+    qaSet.isAIGenerated,  // AI 생성 질문은 자기투자 제한 없음
   );
   if (violation) {
     throw new InvestmentValidationError(violation.message, violation.code, violation.statusCode);

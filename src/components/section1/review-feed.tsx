@@ -98,21 +98,23 @@ export function ReviewFeed({ onSelectQASet, onAnswerGap, onNewQuestion }: Review
         });
       }
 
-      // 리뷰/개선된 답변
+      // 리뷰/개선된 답변 (본인이 만든 것 제외)
       if (needsReviewRes.ok) {
         const data = await needsReviewRes.json();
-        (data.qaSets ?? []).filter((qa: any) => qa.summary).forEach((qa: any) => {
-          combined.push({
-            id: qa.id,
-            title: qa.title,
-            type: "needs_review",
-            creator: qa.creator,
-            totalInvested: qa.totalInvested,
-            investorCount: qa.investorCount,
-            aiAnswer: qa.messages?.[0]?.content,
-            humanImprovement: qa.summary,
+        (data.qaSets ?? [])
+          .filter((qa: any) => qa.summary && qa.creatorId !== session?.user?.id)
+          .forEach((qa: any) => {
+            combined.push({
+              id: qa.id,
+              title: qa.title,
+              type: "needs_review",
+              creator: qa.creator,
+              totalInvested: qa.totalInvested,
+              investorCount: qa.investorCount,
+              aiAnswer: qa.messages?.[0]?.content,
+              humanImprovement: qa.summary,
+            });
           });
-        });
       }
 
       // 섞어서 표시

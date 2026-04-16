@@ -40,10 +40,12 @@ export async function checkInvestmentRules(
   amount: number,
   userCreatedAt: Date,
   isNegative: boolean = false,
-  ipAddress?: string | null
+  ipAddress?: string | null,
+  isAIGenerated: boolean = false
 ): Promise<AntiGamingViolation | null> {
   // 1. 자기 투자 방지 (마이너스 투자는 별도 처리됨 — API 라우트에서)
-  if (!isNegative && userId === qaSetCreatorId) {
+  // 예외: AI 생성 질문은 누구나 투자 가능 (creatorId가 systemAI이므로 일반적으로 매칭 안됨)
+  if (!isNegative && userId === qaSetCreatorId && !isAIGenerated) {
     return {
       code: "SELF_INVESTMENT",
       message: "본인이 만든 Q&A에는 추가 투자할 수 없습니다. (공유 시 첫 투자만 허용)",
