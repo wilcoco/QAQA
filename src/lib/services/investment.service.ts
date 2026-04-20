@@ -206,6 +206,7 @@ export async function validateInvestment(
     prisma, input.userId, qaSetId, qaSet.creatorId,
     input.amount, user.createdAt, input.isNegative, input.ipAddress,
     qaSet.isAIGenerated,  // AI 생성 질문은 자기투자 제한 없음
+    qaSet.isShared,       // 이미 공유된 Q&A는 창작자도 추가 투자 가능
   );
   if (violation) {
     throw new InvestmentValidationError(violation.message, violation.code, violation.statusCode);
